@@ -1,0 +1,126 @@
+package sena.adso.roles.modelo;
+
+public abstract class Libro {
+    private int id;
+    private String titulo;
+    private String isbn;
+    private String autor;
+    private int ejemplaresDisponibles;
+    private boolean prestado;
+    private String tipo;
+
+    // Constructor por defecto
+    public Libro() {
+        this.prestado = false;
+    }
+
+    // Constructor con parámetros
+    public Libro(String titulo, String isbn, String autor, int ejemplaresDisponibles) {
+        this();
+        this.titulo = titulo;
+        this.isbn = isbn;
+        this.autor = autor;
+        this.ejemplaresDisponibles = ejemplaresDisponibles;
+    }
+
+    // Getters y Setters
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public String getAutor() {
+        return autor;
+    }
+
+    public void setAutor(String autor) {
+        this.autor = autor;
+    }
+
+    public int getEjemplaresDisponibles() {
+        return ejemplaresDisponibles;
+    }
+
+    public void setEjemplaresDisponibles(int ejemplaresDisponibles) {
+        this.ejemplaresDisponibles = ejemplaresDisponibles;
+    }
+
+    public boolean isPrestado() {
+        return prestado;
+    }
+
+    public void setPrestado(boolean prestado) {
+        this.prestado = prestado;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    // Método abstracto que debe ser implementado por las clases hijas
+    public abstract String getTipoLibro();
+
+    // Método para obtener el estado como texto (para usar en JSP)
+    public String getEstado() {
+        if (estaDisponible()) {
+            return "Disponible";
+        } else {
+            return "No disponible";
+        }
+    }
+
+    // Métodos de utilidad
+    public boolean estaDisponible() {
+        return ejemplaresDisponibles > 0 && !prestado;
+    }
+
+    public void prestar() {
+        if (estaDisponible()) {
+            ejemplaresDisponibles--;
+            if (ejemplaresDisponibles == 0) {
+                prestado = true;
+            }
+        }
+    }
+
+    public void devolver() {
+        ejemplaresDisponibles++;
+        prestado = false;
+    }
+
+    @Override
+    public String toString() {
+        return "Libro{" +
+                "id=" + id +
+                ", titulo='" + titulo + '\'' +
+                ", isbn='" + isbn + '\'' +
+                ", autor='" + autor + '\'' +
+                ", ejemplaresDisponibles=" + ejemplaresDisponibles +
+                ", prestado=" + prestado +
+                ", tipo='" + tipo + '\'' +
+                '}';
+    }
+}

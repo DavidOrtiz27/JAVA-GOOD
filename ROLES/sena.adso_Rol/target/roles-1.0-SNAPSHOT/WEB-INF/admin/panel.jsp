@@ -214,12 +214,12 @@
                                     <c:forEach items="${ultimosPrestamos}" var="prestamo">
                                         <tr>
                                             <td>${prestamo.id}</td>
-                                            <td>${prestamo.libro.titulo}</td>
-                                            <td>${prestamo.usuario.nombre}</td>
+                                            <td>${prestamo.tituloLibro}</td>
+                                            <td>${prestamo.nombreUsuario}</td>
                                             <td>${prestamo.fechaPrestamo}</td>
                                             <td>
                                                 <c:choose>
-                                                    <c:when test="${prestamo.estado == 'Activo'}">
+                                                    <c:when test="${prestamo.estado == 'ACTIVO'}">
                                                         <span class="badge bg-success">Activo</span>
                                                     </c:when>
                                                     <c:otherwise>
@@ -235,45 +235,6 @@
                     </div>
                 </div>
 
-                <!-- Libros más prestados -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Libros Más Prestados</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Título</th>
-                                        <th>Autor</th>
-                                        <th>Total Préstamos</th>
-                                        <th>Disponibles</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${librosMasPrestados}" var="libro">
-                                        <tr>
-                                            <td>${libro.titulo}</td>
-                                            <td>${libro.autor}</td>
-                                            <td>${libro.totalPrestamos}</td>
-                                            <td>
-                                                <c:choose>
-                                                    <c:when test="${libro.disponibles > 0}">
-                                                        <span class="badge bg-success">${libro.disponibles}</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge bg-danger">0</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </main>
         </div>
     </div>

@@ -113,22 +113,6 @@
                 </div>
             </div>
 
-            <!-- Contenido principal -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Panel de Control</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-download me-2"></i>Exportar
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-printer me-2"></i>Imprimir
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Tarjetas de estadísticas -->
                 <div class="row g-4 mb-4">
                     <div class="col-md-3">
@@ -214,12 +198,12 @@
                                     <c:forEach items="${ultimosPrestamos}" var="prestamo">
                                         <tr>
                                             <td>${prestamo.id}</td>
-                                            <td>${prestamo.libro.titulo}</td>
-                                            <td>${prestamo.usuario.nombre}</td>
+                                            <td>${prestamo.tituloLibro}</td>
+                                            <td>${prestamo.nombreUsuario}</td>
                                             <td>${prestamo.fechaPrestamo}</td>
                                             <td>
                                                 <c:choose>
-                                                    <c:when test="${prestamo.estado == 'Activo'}">
+                                                    <c:when test="${prestamo.estado == 'ACTIVO'}">
                                                         <span class="badge bg-success">Activo</span>
                                                     </c:when>
                                                     <c:otherwise>
@@ -235,45 +219,6 @@
                     </div>
                 </div>
 
-                <!-- Libros más prestados -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Libros Más Prestados</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Título</th>
-                                        <th>Autor</th>
-                                        <th>Total Préstamos</th>
-                                        <th>Disponibles</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${librosMasPrestados}" var="libro">
-                                        <tr>
-                                            <td>${libro.titulo}</td>
-                                            <td>${libro.autor}</td>
-                                            <td>${libro.totalPrestamos}</td>
-                                            <td>
-                                                <c:choose>
-                                                    <c:when test="${libro.disponibles > 0}">
-                                                        <span class="badge bg-success">${libro.disponibles}</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge bg-danger">0</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </main>
         </div>
     </div>

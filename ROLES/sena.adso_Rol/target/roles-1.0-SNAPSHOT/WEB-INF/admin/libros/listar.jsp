@@ -11,6 +11,9 @@
     <!-- Estilos Bootstrap e íconos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet"/>
     
     <style>
         .sidebar {
@@ -45,6 +48,32 @@
         }
         .navbar {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Estilos para DataTables */
+        .dataTables_wrapper .dataTables_length select {
+            padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #ced4da;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #ced4da;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.375rem 0.75rem;
+            margin: 0 0.25rem;
+            border-radius: 0.375rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #0d6efd;
+            color: white !important;
+            border: none;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #0b5ed7;
+            color: white !important;
+            border: none;
         }
     </style>
 </head>
@@ -113,26 +142,28 @@
                 </div>
 
                 <!-- Mensajes -->
-                <c:if test="${not empty mensaje}">
-                    <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
-                        ${mensaje}
+                <c:if test="${not empty sessionScope.mensaje}">
+                    <div class="alert alert-${sessionScope.tipo} alert-dismissible fade show" role="alert">
+                        ${sessionScope.mensaje}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                    <c:remove var="mensaje" scope="session"/>
+                    <c:remove var="tipo" scope="session"/>
                 </c:if>
 
                 <!-- Tabla de libros -->
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
+                            <table id="tablaLibros" class="table table-hover align-middle">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
                                         <th>Título</th>
+                                        <th>ISBN</th>
                                         <th>Autor</th>
-                                        <th>Categoría</th>
-                                        <th>Ejemplares</th>
-                                        <th>Disponibles</th>
+                                        <th>Ejemplares Totales</th>
+                                        <th>Ejemplares Disponibles</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -142,13 +173,13 @@
                                         <tr>
                                             <td>${libro.id}</td>
                                             <td>${libro.titulo}</td>
+                                            <td>${libro.isbn}</td>
                                             <td>${libro.autor}</td>
-                                            <td>${libro.tipoLibro}</td>
+                                            <td>${libro.ejemplaresTotales}</td>
                                             <td>${libro.ejemplaresDisponibles}</td>
-                                            <td>${libro.estaDisponible() ? 'Sí' : 'No'}</td>
                                             <td>
                                                 <c:choose>
-                                                    <c:when test="${libro.estaDisponible()}">
+                                                    <c:when test="${libro.ejemplaresDisponibles > 0}">
                                                         <span class="badge bg-success">Disponible</span>
                                                     </c:when>
                                                     <c:otherwise>
@@ -215,6 +246,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <form id="formEliminar" action="${pageContext.request.contextPath}/admin/libros/eliminar" method="post" style="display: inline;">
+                        <input type="hidden" name="accion" value="eliminar">
                         <input type="hidden" name="id" id="libroIdEliminar">
                         <button type="submit" class="btn btn-danger">
                             <i class="bi bi-trash me-2"></i>Eliminar
@@ -227,7 +259,32 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
+        // Inicializar DataTable
+        $(document).ready(function() {
+            $('#tablaLibros').DataTable({
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                order: [[0, 'desc']], // Ordenar por ID descendente por defecto
+                columnDefs: [
+                    {
+                        targets: -1, // Última columna (acciones)
+                        orderable: false // Deshabilitar ordenamiento
+                    }
+                ]
+            });
+        });
+
         // Función para confirmar eliminación
         function confirmarEliminacion(id, titulo, autor, isbn, tipo, ejemplares) {
             const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));

@@ -13,6 +13,7 @@ CREATE TABLE libros (
     isbn VARCHAR(13),
     autor VARCHAR(100),
     ejemplares_disponibles INT,
+    ejemplares_totales INT,
     prestado BOOLEAN,
     -- Campos específicos según el tipo
     genero VARCHAR(50),

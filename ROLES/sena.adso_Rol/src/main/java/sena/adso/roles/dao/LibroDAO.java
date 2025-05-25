@@ -19,14 +19,17 @@ public class LibroDAO {
 
     public List<Libro> listarTodos() throws SQLException {
         List<Libro> libros = new ArrayList<>();
-        String sql = "SELECT * FROM libros";
-
+        String sql = "SELECT * FROM libros ORDER BY titulo";
+        
         try (Connection conn = ConexionBD.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
             while (rs.next()) {
-                libros.add(crearLibroDesdeResultSet(rs));
+                Libro libro = crearLibroDesdeResultSet(rs);
+                libro.setEjemplaresDisponibles(rs.getInt("ejemplares_disponibles"));
+                libro.setEjemplaresTotales(rs.getInt("ejemplares_totales"));
+                libros.add(libro);
             }
         }
         return libros;
@@ -82,9 +85,9 @@ public class LibroDAO {
     }
 
     public boolean insertar(Libro libro) throws SQLException {
-        String sql = "INSERT INTO libros (tipo, titulo, isbn, autor, ejemplares_disponibles, prestado, " +
+        String sql = "INSERT INTO libros (tipo, titulo, isbn, autor, ejemplares_disponibles, ejemplares_totales, prestado, " +
                     "genero, premios_literarios, area_tematica, publico_objetivo, campo_academico, consulta_interna) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -342,38 +345,39 @@ public class LibroDAO {
         stmt.setString(3, libro.getIsbn());
         stmt.setString(4, libro.getAutor());
         stmt.setInt(5, libro.getEjemplaresDisponibles());
-        stmt.setBoolean(6, libro.isPrestado());
+        stmt.setInt(6, libro.getEjemplaresTotales());
+        stmt.setBoolean(7, libro.isPrestado());
 
         // Establecer todos los campos específicos como NULL primero
-        stmt.setNull(7, Types.VARCHAR);  // genero
-        stmt.setNull(8, Types.VARCHAR);  // premios_literarios
-        stmt.setNull(9, Types.VARCHAR);  // area_tematica
-        stmt.setNull(10, Types.VARCHAR); // publico_objetivo
-        stmt.setNull(11, Types.VARCHAR); // campo_academico
-        stmt.setNull(12, Types.BOOLEAN); // consulta_interna
+        stmt.setNull(8, Types.VARCHAR);  // genero
+        stmt.setNull(9, Types.VARCHAR);  // premios_literarios
+        stmt.setNull(10, Types.VARCHAR); // area_tematica
+        stmt.setNull(11, Types.VARCHAR); // publico_objetivo
+        stmt.setNull(12, Types.VARCHAR); // campo_academico
+        stmt.setNull(13, Types.BOOLEAN); // consulta_interna
 
         // Luego establecer los campos específicos según el tipo
         if (libro instanceof LibroFiccion) {
             System.out.println("Configurando campos para LibroFiccion");
             LibroFiccion ficcion = (LibroFiccion) libro;
-            stmt.setString(7, ficcion.getGenero());
-            stmt.setString(8, ficcion.getPremiosLiterarios());
+            stmt.setString(8, ficcion.getGenero());
+            stmt.setString(9, ficcion.getPremiosLiterarios());
         } else if (libro instanceof LibroNoFiccion) {
             System.out.println("Configurando campos para LibroNoFiccion");
             LibroNoFiccion noFiccion = (LibroNoFiccion) libro;
-            stmt.setString(9, noFiccion.getAreaTematica());
-            stmt.setString(10, noFiccion.getPublicoObjetivo());
+            stmt.setString(10, noFiccion.getAreaTematica());
+            stmt.setString(11, noFiccion.getPublicoObjetivo());
         } else if (libro instanceof LibroReferencia) {
             System.out.println("Configurando campos para LibroReferencia");
             LibroReferencia referencia = (LibroReferencia) libro;
-            stmt.setString(11, referencia.getCampoAcademico());
-            stmt.setBoolean(12, referencia.isConsultaInterna());
+            stmt.setString(12, referencia.getCampoAcademico());
+            stmt.setBoolean(13, referencia.isConsultaInterna());
         }
     }
 
     public List<Libro> listarDisponibles() throws SQLException {
         List<Libro> libros = new ArrayList<>();
-        String sql = "SELECT * FROM libros WHERE ejemplares_disponibles > 0 AND prestado = false";
+        String sql = "SELECT * FROM libros WHERE ejemplares_disponibles > 0";
 
         try (Connection conn = ConexionBD.getConnection();
              Statement stmt = conn.createStatement();
@@ -387,7 +391,7 @@ public class LibroDAO {
     }
 
     public boolean estaDisponible(int libroId) throws SQLException {
-        String sql = "SELECT ejemplares_disponibles, prestado FROM libros WHERE id = ?";
+        String sql = "SELECT ejemplares_disponibles FROM libros WHERE id = ?";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -396,7 +400,7 @@ public class LibroDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("ejemplares_disponibles") > 0 && !rs.getBoolean("prestado");
+                    return rs.getInt("ejemplares_disponibles") > 0;
                 }
             }
         }
@@ -404,14 +408,13 @@ public class LibroDAO {
     }
 
     public void actualizarDisponibilidad(int libroId, boolean disponible) throws SQLException {
-        String sql = "UPDATE libros SET prestado = ?, ejemplares_disponibles = ejemplares_disponibles + ? WHERE id = ?";
+        String sql = "UPDATE libros SET ejemplares_disponibles = ejemplares_disponibles + ? WHERE id = ?";
 
         try (Connection conn = ConexionBD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setBoolean(1, !disponible);
-            stmt.setInt(2, disponible ? 1 : -1);
-            stmt.setInt(3, libroId);
+            stmt.setInt(1, disponible ? 1 : -1);
+            stmt.setInt(2, libroId);
 
             stmt.executeUpdate();
         }

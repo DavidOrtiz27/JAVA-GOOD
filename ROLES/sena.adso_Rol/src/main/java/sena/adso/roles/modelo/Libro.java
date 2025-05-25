@@ -6,7 +6,9 @@ public abstract class Libro {
     private String isbn;
     private String autor;
     private int ejemplaresDisponibles;
+    private int ejemplaresTotales;
     private boolean prestado;
+    private String tipo;
 
     // Constructor por defecto
     public Libro() {
@@ -63,6 +65,14 @@ public abstract class Libro {
         this.ejemplaresDisponibles = ejemplaresDisponibles;
     }
 
+    public int getEjemplaresTotales() {
+        return ejemplaresTotales;
+    }
+
+    public void setEjemplaresTotales(int ejemplaresTotales) {
+        this.ejemplaresTotales = ejemplaresTotales;
+    }
+
     public boolean isPrestado() {
         return prestado;
     }
@@ -85,21 +95,17 @@ public abstract class Libro {
 
     // Métodos de utilidad
     public boolean estaDisponible() {
-        return ejemplaresDisponibles > 0 && !prestado;
+        return ejemplaresDisponibles > 0;
     }
 
     public void prestar() {
         if (estaDisponible()) {
             ejemplaresDisponibles--;
-            if (ejemplaresDisponibles == 0) {
-                prestado = true;
-            }
         }
     }
 
     public void devolver() {
         ejemplaresDisponibles++;
-        prestado = false;
     }
 
     @Override
@@ -110,6 +116,7 @@ public abstract class Libro {
                 ", isbn='" + isbn + '\'' +
                 ", autor='" + autor + '\'' +
                 ", ejemplaresDisponibles=" + ejemplaresDisponibles +
+                ", ejemplaresTotales=" + ejemplaresTotales +
                 ", prestado=" + prestado +
                 '}';
     }

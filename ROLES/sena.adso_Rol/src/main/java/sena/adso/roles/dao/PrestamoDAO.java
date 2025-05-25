@@ -16,18 +16,19 @@ public class PrestamoDAO {
     // Listar todos los préstamos (activos y devueltos)
     public List<Prestamo> listarTodos() throws SQLException {
         List<Prestamo> prestamos = new ArrayList<>();
-        String sql = "SELECT p.*, l.titulo as titulo_libro, u.nombre as nombre_usuario " +
+        String sql = "SELECT DISTINCT p.*, l.titulo as titulo_libro, u.nombre as nombre_usuario " +
                     "FROM prestamos p " +
                     "JOIN libros l ON p.libro_id = l.id " +
                     "JOIN usuarios u ON p.usuario_id = u.id " +
                     "ORDER BY p.fecha_prestamo DESC";
         
         try (Connection conn = ConexionBD.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                prestamos.add(crearPrestamoDesdeResultSet(rs));
+                Prestamo prestamo = crearPrestamoDesdeResultSet(rs);
+                prestamos.add(prestamo);
             }
         }
         return prestamos;
@@ -50,7 +51,16 @@ public class PrestamoDAO {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    prestamos.add(crearPrestamoDesdeResultSet(rs));
+                    Prestamo prestamo = new Prestamo();
+                    prestamo.setId(rs.getInt("id"));
+                    prestamo.setLibroId(rs.getInt("libro_id"));
+                    prestamo.setUsuarioId(rs.getInt("usuario_id"));
+                    prestamo.setFechaPrestamo(rs.getDate("fecha_prestamo"));
+                    prestamo.setFechaDevolucion(rs.getDate("fecha_devolucion"));
+                    prestamo.setEstado(rs.getString("estado"));
+                    prestamo.setTituloLibro(rs.getString("titulo_libro"));
+                    prestamo.setNombreUsuario(rs.getString("nombre_usuario"));
+                    prestamos.add(prestamo);
                 }
             }
         }
@@ -59,26 +69,18 @@ public class PrestamoDAO {
     
     // Crear nuevo préstamo
     public boolean crear(Prestamo prestamo) throws SQLException {
-        String sql = "INSERT INTO prestamos (libro_id, usuario_id, fecha_prestamo, estado) " +
-                    "VALUES (?, ?, ?, 'ACTIVO')";
+        String sql = "INSERT INTO prestamos (libro_id, usuario_id, fecha_prestamo, fecha_devolucion, estado) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = ConexionBD.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, prestamo.getLibroId());
             stmt.setInt(2, prestamo.getUsuarioId());
             stmt.setDate(3, prestamo.getFechaPrestamo());
+            stmt.setDate(4, prestamo.getFechaDevolucion());
+            stmt.setString(5, prestamo.getEstado());
             
-            int filasAfectadas = stmt.executeUpdate();
-            if (filasAfectadas > 0) {
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        prestamo.setId(rs.getInt(1));
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return stmt.executeUpdate() > 0;
         }
     }
     
@@ -112,7 +114,16 @@ public class PrestamoDAO {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return crearPrestamoDesdeResultSet(rs);
+                    Prestamo prestamo = new Prestamo();
+                    prestamo.setId(rs.getInt("id"));
+                    prestamo.setLibroId(rs.getInt("libro_id"));
+                    prestamo.setUsuarioId(rs.getInt("usuario_id"));
+                    prestamo.setFechaPrestamo(rs.getDate("fecha_prestamo"));
+                    prestamo.setFechaDevolucion(rs.getDate("fecha_devolucion"));
+                    prestamo.setEstado(rs.getString("estado"));
+                    prestamo.setTituloLibro(rs.getString("titulo_libro"));
+                    prestamo.setNombreUsuario(rs.getString("nombre_usuario"));
+                    return prestamo;
                 }
             }
         }
@@ -232,6 +243,23 @@ public class PrestamoDAO {
         }
     }
 
+    public int contarPrestamosActivosUsuario(int usuarioId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM prestamos WHERE usuario_id = ? AND estado = 'ACTIVO'";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, usuarioId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
     public List<Prestamo> listarUltimosPrestamos(int limite) throws SQLException {
         List<Prestamo> prestamos = new ArrayList<>();
         String sql = "SELECT p.*, l.titulo as titulo_libro, u.nombre as nombre_usuario " +
@@ -253,5 +281,22 @@ public class PrestamoDAO {
             }
         }
         return prestamos;
+    }
+
+    public boolean tienePrestamosEnHistorial(int libroId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM prestamos WHERE libro_id = ? AND estado = 'DEVUELTO'";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, libroId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
 }

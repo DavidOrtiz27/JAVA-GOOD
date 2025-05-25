@@ -96,7 +96,8 @@ public class LibroServlet extends HttpServlet {
 		try {
 			if (accion == null || accion.trim().isEmpty()) {
 				System.err.println("No se especificó una acción");
-				request.setAttribute("error", "No se especificó una acción");
+				request.getSession().setAttribute("mensaje", "No se especificó una acción");
+				request.getSession().setAttribute("tipo", "danger");
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
@@ -116,14 +117,16 @@ public class LibroServlet extends HttpServlet {
 					break;
 				default:
 					System.err.println("Acción no reconocida: " + accion);
-					request.setAttribute("error", "Acción no reconocida: " + accion);
+					request.getSession().setAttribute("mensaje", "Acción no reconocida: " + accion);
+					request.getSession().setAttribute("tipo", "danger");
 					response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 					break;
 			}
 		} catch (Exception e) {
 			System.err.println("Error en doPost: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error al procesar la solicitud: " + e.getMessage());
+			request.getSession().setAttribute("mensaje", "Error al procesar la solicitud: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		}
 	}
@@ -138,13 +141,15 @@ public class LibroServlet extends HttpServlet {
 		} catch (SQLException e) {
 			System.err.println("Error al listar libros: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error al cargar la lista de libros: " + e.getMessage());
-			request.getRequestDispatcher("/WEB-INF/errors/500.jsp").forward(request, response);
+			request.getSession().setAttribute("mensaje", "Error al cargar la lista de libros: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		} catch (Exception e) {
 			System.err.println("Error inesperado al listar libros: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error inesperado al cargar la lista de libros: " + e.getMessage());
-			request.getRequestDispatcher("/WEB-INF/errors/500.jsp").forward(request, response);
+			request.getSession().setAttribute("mensaje", "Error inesperado al cargar la lista de libros: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		}
 	}
 
@@ -191,7 +196,8 @@ public class LibroServlet extends HttpServlet {
 			Libro libro = libroDAO.buscarPorId(id);
 			if (libro == null) {
 				System.err.println("Libro no encontrado con ID: " + id);
-				request.setAttribute("error", "Libro no encontrado");
+				request.getSession().setAttribute("mensaje", "Libro no encontrado");
+				request.getSession().setAttribute("tipo", "danger");
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
@@ -201,59 +207,23 @@ public class LibroServlet extends HttpServlet {
 			
 			// Establecer el libro y su tipo
 			request.setAttribute("libro", libro);
-			
-			// Establecer campos específicos según el tipo de libro
-			if (libro instanceof LibroFiccion) {
-				LibroFiccion ficcion = (LibroFiccion) libro;
-				String genero = ficcion.getGenero();
-				String premios = ficcion.getPremiosLiterarios();
-				
-				System.out.println("Estableciendo campos de ficción:");
-				System.out.println("- Género: " + genero);
-				System.out.println("- Premios: " + premios);
-				
-				request.setAttribute("genero", genero != null ? genero : "");
-				request.setAttribute("premiosLiterarios", premios != null ? premios : "");
-			} else if (libro instanceof LibroNoFiccion) {
-				LibroNoFiccion noFiccion = (LibroNoFiccion) libro;
-				String areaTematica = noFiccion.getAreaTematica();
-				String publicoObjetivo = noFiccion.getPublicoObjetivo();
-				
-				System.out.println("Estableciendo campos de no ficción:");
-				System.out.println("- Área temática: " + areaTematica);
-				System.out.println("- Público objetivo: " + publicoObjetivo);
-				
-				request.setAttribute("areaTematica", areaTematica != null ? areaTematica : "");
-				request.setAttribute("publicoObjetivo", publicoObjetivo != null ? publicoObjetivo : "");
-			} else if (libro instanceof LibroReferencia) {
-				LibroReferencia referencia = (LibroReferencia) libro;
-				String campoAcademico = referencia.getCampoAcademico();
-				boolean consultaInterna = referencia.isConsultaInterna();
-				
-				System.out.println("Estableciendo campos de referencia:");
-				System.out.println("- Campo académico: " + campoAcademico);
-				System.out.println("- Consulta interna: " + consultaInterna);
-				
-				request.setAttribute("campoAcademico", campoAcademico != null ? campoAcademico : "");
-				request.setAttribute("consultaInterna", consultaInterna);
-			}
-			
-			// Redirigir al formulario de edición
 			request.getRequestDispatcher("/WEB-INF/admin/libros/editar.jsp").forward(request, response);
-			
 		} catch (NumberFormatException e) {
 			System.err.println("Error al parsear ID: " + e.getMessage());
-			request.setAttribute("error", "ID de libro inválido");
+			request.getSession().setAttribute("mensaje", "ID de libro inválido");
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		} catch (SQLException e) {
 			System.err.println("Error de base de datos: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error al cargar el libro: " + e.getMessage());
+			request.getSession().setAttribute("mensaje", "Error al cargar el formulario de edición: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		} catch (Exception e) {
 			System.err.println("Error inesperado: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error inesperado: " + e.getMessage());
+			request.getSession().setAttribute("mensaje", "Error inesperado al cargar el formulario de edición");
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		}
 	}
@@ -288,21 +258,26 @@ public class LibroServlet extends HttpServlet {
 			System.out.println("Libro creado: " + libro.getTitulo());
 			
 			if (libroDAO.existeIsbn(libro.getIsbn())) {
-				request.setAttribute("error", "Ya existe un libro con ese ISBN");
+				request.getSession().setAttribute("mensaje", "Ya existe un libro con ese ISBN");
+				request.getSession().setAttribute("tipo", "danger");
 				request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
 				return;
 			}
 
 			if (libroDAO.insertar(libro)) {
+				request.getSession().setAttribute("mensaje", "Libro creado exitosamente");
+				request.getSession().setAttribute("tipo", "success");
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 			} else {
-				request.setAttribute("error", "Error al guardar el libro");
+				request.getSession().setAttribute("mensaje", "Error al guardar el libro");
+				request.getSession().setAttribute("tipo", "danger");
 				request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
 			}
 		} catch (Exception e) {
 			System.err.println("Error al guardar libro: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error al guardar el libro");
+			request.getSession().setAttribute("mensaje", "Error al guardar el libro");
+			request.getSession().setAttribute("tipo", "danger");
 			request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
 		}
 	}
@@ -394,40 +369,46 @@ public class LibroServlet extends HttpServlet {
 			// Verificar si el libro existe
 			Libro libro = libroDAO.buscarPorId(id);
 			if (libro == null) {
-				request.setAttribute("error", "El libro no existe");
+				request.getSession().setAttribute("mensaje", "El libro no existe");
+				request.getSession().setAttribute("tipo", "danger");
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
-			
+
 			// Verificar si tiene préstamos activos
 			if (libroDAO.tienePrestamosActivos(id)) {
-				request.setAttribute("error", "No se puede eliminar el libro porque tiene préstamos activos");
+				request.getSession().setAttribute("mensaje", "No se puede eliminar el libro porque tiene préstamos activos. Por favor, asegúrese de que todos los préstamos estén devueltos antes de eliminar el libro.");
+				request.getSession().setAttribute("tipo", "warning");
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
 			
 			// Intentar eliminar el libro
 			if (libroDAO.eliminar(id)) {
-				request.setAttribute("mensaje", "Libro eliminado correctamente");
-				request.setAttribute("tipo", "success");
+				request.getSession().setAttribute("mensaje", "Libro eliminado correctamente");
+				request.getSession().setAttribute("tipo", "success");
 			} else {
-				request.setAttribute("error", "Error al eliminar el libro");
+				request.getSession().setAttribute("mensaje", "Error al eliminar el libro");
+				request.getSession().setAttribute("tipo", "danger");
 			}
 			
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		} catch (NumberFormatException e) {
 			System.err.println("Error al parsear ID: " + e.getMessage());
-			request.setAttribute("error", "ID de libro inválido");
+			request.getSession().setAttribute("mensaje", "ID de libro inválido");
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		} catch (SQLException e) {
 			System.err.println("Error de base de datos: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error al eliminar el libro: " + e.getMessage());
+			request.getSession().setAttribute("mensaje", "Error al eliminar el libro: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		} catch (Exception e) {
 			System.err.println("Error inesperado: " + e.getMessage());
 			e.printStackTrace();
-			request.setAttribute("error", "Error inesperado al eliminar el libro");
+			request.getSession().setAttribute("mensaje", "Error inesperado al eliminar el libro");
+			request.getSession().setAttribute("tipo", "danger");
 			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 		}
 	}
@@ -456,6 +437,7 @@ public class LibroServlet extends HttpServlet {
 				ficcion.setIsbn(isbn);
 				ficcion.setAutor(autor);
 				ficcion.setEjemplaresDisponibles(ejemplaresDisponibles);
+				ficcion.setEjemplaresTotales(ejemplaresDisponibles);
 				ficcion.setGenero(request.getParameter("genero"));
 				ficcion.setPremiosLiterarios(request.getParameter("premiosLiterarios"));
 				System.out.println("Campos específicos de ficción:");
@@ -471,6 +453,7 @@ public class LibroServlet extends HttpServlet {
 				noFiccion.setIsbn(isbn);
 				noFiccion.setAutor(autor);
 				noFiccion.setEjemplaresDisponibles(ejemplaresDisponibles);
+				noFiccion.setEjemplaresTotales(ejemplaresDisponibles);
 				noFiccion.setAreaTematica(request.getParameter("areaTematica"));
 				noFiccion.setPublicoObjetivo(request.getParameter("publicoObjetivo"));
 				System.out.println("Campos específicos de no ficción:");
@@ -486,6 +469,7 @@ public class LibroServlet extends HttpServlet {
 				referencia.setIsbn(isbn);
 				referencia.setAutor(autor);
 				referencia.setEjemplaresDisponibles(ejemplaresDisponibles);
+				referencia.setEjemplaresTotales(ejemplaresDisponibles);
 				referencia.setCampoAcademico(request.getParameter("campoAcademico"));
 				referencia.setConsultaInterna(request.getParameter("consultaInterna") != null);
 				System.out.println("Campos específicos de referencia:");
@@ -499,6 +483,76 @@ public class LibroServlet extends HttpServlet {
 				throw new IllegalArgumentException("Tipo de libro no válido: " + tipo);
 		}
 
+		libro.setTitulo(titulo);
+		libro.setIsbn(isbn);
+		libro.setAutor(autor);
+		libro.setEjemplaresDisponibles(ejemplaresDisponibles);
+		libro.setEjemplaresTotales(ejemplaresDisponibles);
+
 		return libro;
+	}
+
+	private void editarLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+		System.out.println("Editando libro...");
+		try {
+			int id = Integer.parseInt(request.getParameter("id"));
+			System.out.println("ID del libro a editar: " + id);
+			
+			// Verificar si el libro existe
+			Libro libro = libroDAO.buscarPorId(id);
+			if (libro == null) {
+				request.getSession().setAttribute("mensaje", "El libro no existe");
+				request.getSession().setAttribute("tipo", "danger");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
+			
+			// Obtener los datos del formulario
+			String titulo = request.getParameter("titulo");
+			String autor = request.getParameter("autor");
+			String isbn = request.getParameter("isbn");
+			int ejemplaresTotales = Integer.parseInt(request.getParameter("ejemplares"));
+			
+			// Verificar si el ISBN ya existe para otro libro
+			if (!isbn.equals(libro.getIsbn()) && libroDAO.existeIsbn(isbn)) {
+				request.getSession().setAttribute("mensaje", "Ya existe un libro con ese ISBN");
+				request.getSession().setAttribute("tipo", "danger");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/editar?id=" + id);
+				return;
+			}
+			
+			// Actualizar el libro
+			libro.setTitulo(titulo);
+			libro.setAutor(autor);
+			libro.setIsbn(isbn);
+			libro.setEjemplaresTotales(ejemplaresTotales);
+			
+			if (libroDAO.actualizar(libro)) {
+				request.getSession().setAttribute("mensaje", "Libro actualizado correctamente");
+				request.getSession().setAttribute("tipo", "success");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+			} else {
+				request.getSession().setAttribute("mensaje", "Error al actualizar el libro");
+				request.getSession().setAttribute("tipo", "danger");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/editar?id=" + id);
+			}
+		} catch (NumberFormatException e) {
+			System.err.println("Error al parsear ID: " + e.getMessage());
+			request.getSession().setAttribute("mensaje", "ID de libro inválido");
+			request.getSession().setAttribute("tipo", "danger");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (SQLException e) {
+			System.err.println("Error de base de datos: " + e.getMessage());
+			e.printStackTrace();
+			request.getSession().setAttribute("mensaje", "Error al actualizar el libro: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (Exception e) {
+			System.err.println("Error inesperado: " + e.getMessage());
+			e.printStackTrace();
+			request.getSession().setAttribute("mensaje", "Error inesperado al actualizar el libro");
+			request.getSession().setAttribute("tipo", "danger");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
 	}
 }

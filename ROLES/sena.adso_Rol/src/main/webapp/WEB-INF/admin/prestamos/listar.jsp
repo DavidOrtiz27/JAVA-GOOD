@@ -7,6 +7,7 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <!DOCTYPE html>
 <html lang="es">
@@ -18,6 +19,9 @@
     <!-- Estilos Bootstrap e íconos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet"/>
     
     <style>
         .sidebar {
@@ -49,9 +53,86 @@
             border: none;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
         }
         .navbar {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Estilos mejorados para DataTables */
+        .dataTables_wrapper {
+            padding: 1.5rem;
+            font-size: 1.1rem;
+            width: 100%;
+        }
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 1.5rem;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            width: 300px;
+        }
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            font-size: 1rem;
+        }
+        .dataTables_wrapper .dataTables_info {
+            padding-top: 1.5rem;
+            font-size: 1rem;
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            padding-top: 1.5rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.5rem 1rem;
+            margin: 0 0.2rem;
+            font-size: 1rem;
+        }
+        .table {
+            font-size: 1.1rem;
+            width: 100% !important;
+        }
+        .table th {
+            font-weight: 600;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        .badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+        }
+        .nav-tabs .nav-link {
+            font-size: 1.1rem;
+            padding: 1rem 1.5rem;
+        }
+        .h2 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        .table-responsive {
+            width: 100%;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tab-content {
+            padding: 1rem 0;
+        }
+        .tab-pane {
+            padding: 1rem 0;
         }
     </style>
 </head>
@@ -113,72 +194,162 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Gestión de Préstamos</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoPrestamo">
+                        <a href="${pageContext.request.contextPath}/admin/prestamos/nuevo" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-2"></i>Nuevo Préstamo
-                        </button>
+                        </a>
                     </div>
                 </div>
 
                 <!-- Mensajes -->
-                <c:if test="${not empty mensaje}">
-                    <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
-                        ${mensaje}
+                <c:if test="${not empty sessionScope.mensaje}">
+                    <div class="alert alert-${sessionScope.tipo} alert-dismissible fade show" role="alert">
+                        ${sessionScope.mensaje}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                    <c:remove var="mensaje" scope="session"/>
+                    <c:remove var="tipo" scope="session"/>
                 </c:if>
 
-                <!-- Tabla de préstamos -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Libro</th>
-                                        <th>Usuario</th>
-                                        <th>Fecha Préstamo</th>
-                                        <th>Fecha Devolución</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${prestamos}" var="prestamo">
-                                        <tr>
-                                            <td>${prestamo.id}</td>
-                                            <td>${prestamo.libro.titulo}</td>
-                                            <td>${prestamo.usuario.nombre}</td>
-                                            <td>${prestamo.fechaPrestamo}</td>
-                                            <td>${prestamo.fechaDevolucion}</td>
-                                            <td>
-                                                <c:choose>
-                                                    <c:when test="${prestamo.estado == 'Activo'}">
+                <!-- Pestañas -->
+                <ul class="nav nav-tabs mb-4" id="prestamosTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="activos-tab" data-bs-toggle="tab" data-bs-target="#activos" type="button" role="tab" aria-controls="activos" aria-selected="true">
+                            <i class="bi bi-book me-2"></i>Préstamos Activos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="vencidos-tab" data-bs-toggle="tab" data-bs-target="#vencidos" type="button" role="tab" aria-controls="vencidos" aria-selected="false">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Préstamos Vencidos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab" aria-controls="historial" aria-selected="false">
+                            <i class="bi bi-clock-history me-2"></i>Historial
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Contenido de las pestañas -->
+                <div class="tab-content" id="prestamosTabsContent">
+                    <!-- Préstamos Activos -->
+                    <div class="tab-pane fade show active" id="activos" role="tabpanel" aria-labelledby="activos-tab">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="tablaActivos" class="table table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Libro</th>
+                                                <th>Usuario</th>
+                                                <th>Fecha Préstamo</th>
+                                                <th>Fecha Devolución</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${prestamosActivos}" var="prestamo">
+                                                <tr>
+                                                    <td>${prestamo.id}</td>
+                                                    <td>${prestamo.tituloLibro}</td>
+                                                    <td>${prestamo.nombreUsuario}</td>
+                                                    <td><fmt:formatDate value="${prestamo.fechaPrestamo}" pattern="dd/MM/yyyy"/></td>
+                                                    <td><fmt:formatDate value="${prestamo.fechaDevolucion}" pattern="dd/MM/yyyy"/></td>
+                                                    <td>
                                                         <span class="badge bg-success">Activo</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge bg-secondary">Devuelto</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <c:if test="${prestamo.estado == 'Activo'}">
+                                                    </td>
+                                                    <td>
                                                         <button type="button" class="btn btn-sm btn-success" 
-                                                                onclick="confirmarDevolucion('${prestamo.id}')" title="Devolver">
-                                                            <i class="bi bi-check-circle"></i>
+                                                                onclick="confirmarDevolucion('${prestamo.id}')">
+                                                            <i class="bi bi-check-circle"></i> Devolver
                                                         </button>
-                                                    </c:if>
-                                                    <button type="button" class="btn btn-sm btn-danger" 
-                                                            onclick="confirmarEliminacion('${prestamo.id}')" title="Eliminar">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Préstamos Vencidos -->
+                    <div class="tab-pane fade" id="vencidos" role="tabpanel" aria-labelledby="vencidos-tab">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="tablaVencidos" class="table table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Libro</th>
+                                                <th>Usuario</th>
+                                                <th>Fecha Préstamo</th>
+                                                <th>Fecha Devolución</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${prestamosVencidos}" var="prestamo">
+                                                <tr>
+                                                    <td>${prestamo.id}</td>
+                                                    <td>${prestamo.tituloLibro}</td>
+                                                    <td>${prestamo.nombreUsuario}</td>
+                                                    <td><fmt:formatDate value="${prestamo.fechaPrestamo}" pattern="dd/MM/yyyy"/></td>
+                                                    <td><fmt:formatDate value="${prestamo.fechaDevolucion}" pattern="dd/MM/yyyy"/></td>
+                                                    <td>
+                                                        <span class="badge bg-danger">Vencido</span>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-success" 
+                                                                onclick="confirmarDevolucion('${prestamo.id}')">
+                                                            <i class="bi bi-check-circle"></i> Devolver
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Historial -->
+                    <div class="tab-pane fade" id="historial" role="tabpanel" aria-labelledby="historial-tab">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="tablaHistorial" class="table table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Libro</th>
+                                                <th>Usuario</th>
+                                                <th>Fecha Préstamo</th>
+                                                <th>Fecha Devolución</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${historial}" var="prestamo">
+                                                <tr>
+                                                    <td>${prestamo.id}</td>
+                                                    <td>${prestamo.tituloLibro}</td>
+                                                    <td>${prestamo.nombreUsuario}</td>
+                                                    <td><fmt:formatDate value="${prestamo.fechaPrestamo}" pattern="dd/MM/yyyy"/></td>
+                                                    <td><fmt:formatDate value="${prestamo.fechaDevolucion}" pattern="dd/MM/yyyy"/></td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">Devuelto</span>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -186,140 +357,96 @@
         </div>
     </div>
 
-    <!-- Modal Nuevo Préstamo -->
-    <div class="modal fade" id="modalNuevoPrestamo" tabindex="-1">
-        <div class="modal-dialog">
+    <!-- Modal de Confirmación de Devolución -->
+    <div class="modal fade" id="modalConfirmarDevolucion" tabindex="-1" aria-labelledby="modalConfirmarDevolucionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Nuevo Préstamo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalConfirmarDevolucionLabel">Confirmar Devolución</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="${pageContext.request.contextPath}/admin/prestamos/crear" method="post" class="needs-validation" novalidate>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="libro" class="form-label">Libro</label>
-                            <select class="form-select" id="libro" name="libroId" required>
-                                <option value="">Seleccione un libro</option>
-                                <c:forEach items="${librosDisponibles}" var="libro">
-                                    <option value="${libro.id}">${libro.titulo}</option>
-                                </c:forEach>
-                            </select>
-                            <div class="invalid-feedback">
-                                Por favor seleccione un libro
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="usuario" class="form-label">Usuario</label>
-                            <select class="form-select" id="usuario" name="usuarioId" required>
-                                <option value="">Seleccione un usuario</option>
-                                <c:forEach items="${usuariosActivos}" var="usuario">
-                                    <option value="${usuario.id}">${usuario.nombre}</option>
-                                </c:forEach>
-                            </select>
-                            <div class="invalid-feedback">
-                                Por favor seleccione un usuario
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="fechaDevolucion" class="form-label">Fecha de Devolución</label>
-                            <input type="date" class="form-control" id="fechaDevolucion" name="fechaDevolucion" required>
-                            <div class="invalid-feedback">
-                                Por favor seleccione una fecha de devolución
-                            </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        ¿Está seguro que desea registrar la devolución de este libro?
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" id="modalPrestamoLibro"></h6>
+                            <p class="mb-1"><strong>Usuario:</strong> <span id="modalPrestamoUsuario"></span></p>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save me-2"></i>Crear Préstamo
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="formDevolver" action="${pageContext.request.contextPath}/admin/prestamos/devolver" method="post" style="display: inline;">
+                        <input type="hidden" name="id" id="prestamoIdDevolver">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-2"></i>Confirmar Devolución
                         </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de confirmación de devolución -->
-    <div class="modal fade" id="modalConfirmarDevolucion" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Devolución</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    ¿Está seguro que desea registrar la devolución de este libro?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <a href="#" id="btnConfirmarDevolucion" class="btn btn-success">
-                        <i class="bi bi-check-circle me-2"></i>Confirmar Devolución
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de confirmación de eliminación -->
-    <div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    ¿Está seguro que desea eliminar este préstamo?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <a href="#" id="btnConfirmarEliminar" class="btn btn-danger">
-                        <i class="bi bi-trash me-2"></i>Eliminar
-                    </a>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
     <script>
-        // Validación del formulario
-        (function () {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
+        $(document).ready(function() {
+            // Inicializar DataTables para cada tabla
+            $('#tablaActivos, #tablaVencidos, #tablaHistorial').DataTable({
+                responsive: true,
+                language: {
+                    "decimal": "",
+                    "emptyTable": "No hay datos disponibles",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "infoFiltered": "(filtrado de _MAX_ registros totales)",
+                    "infoPostFix": "",
+                    "thousands": ",",
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "loadingRecords": "Cargando...",
+                    "processing": "Procesando...",
+                    "search": "Buscar:",
+                    "zeroRecords": "No se encontraron registros coincidentes",
+                    "paginate": {
+                        "first": "Primero",
+                        "last": "Último",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "aria": {
+                        "sortAscending": ": activar para ordenar columna ascendente",
+                        "sortDescending": ": activar para ordenar columna descendente"
                     }
-                    form.classList.add('was-validated')
-                }, false)
-            })
-        })()
+                },
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                order: [[0, 'desc']],
+                columnDefs: [
+                    {
+                        targets: -1,
+                        orderable: false
+                    }
+                ]
+            });
+        });
 
-        // Función para confirmar devolución
         function confirmarDevolucion(id) {
-            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarDevolucion'));
-            document.getElementById('btnConfirmarDevolucion').href = 
-                '${pageContext.request.contextPath}/admin/prestamos/devolver?id=' + id;
-            modal.show();
+            console.log("ID del préstamo:", id);
+            if (id && id !== '') {
+                window.location.href = '${pageContext.request.contextPath}/admin/prestamos/devolver?id=' + id;
+            } else {
+                alert("Error: No se pudo obtener el ID del préstamo");
+            }
         }
-
-        // Función para confirmar eliminación
-        function confirmarEliminacion(id) {
-            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));
-            document.getElementById('btnConfirmarEliminar').href = 
-                '${pageContext.request.contextPath}/admin/prestamos/eliminar?id=' + id;
-            modal.show();
-        }
-
-        // Establecer fecha mínima para devolución (mañana)
-        const fechaDevolucion = document.getElementById('fechaDevolucion');
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        fechaDevolucion.min = tomorrow.toISOString().split('T')[0];
     </script>
 </body>
 </html>

@@ -106,11 +106,13 @@
                 </div>
 
                 <!-- Mensajes -->
-                <c:if test="${not empty error}">
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        ${error}
+                <c:if test="${not empty sessionScope.mensaje}">
+                    <div class="alert alert-${sessionScope.tipo} alert-dismissible fade show" role="alert">
+                        ${sessionScope.mensaje}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                    <c:remove var="mensaje" scope="session"/>
+                    <c:remove var="tipo" scope="session"/>
                 </c:if>
 
                 <!-- Formulario -->

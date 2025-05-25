@@ -114,17 +114,19 @@
                 </div>
 
                 <!-- Mensajes -->
-                <c:if test="${not empty mensaje}">
-                    <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
-                        ${mensaje}
+                <c:if test="${not empty sessionScope.mensaje}">
+                    <div class="alert alert-${sessionScope.tipo} alert-dismissible fade show" role="alert">
+                        ${sessionScope.mensaje}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                    <c:remove var="mensaje" scope="session"/>
+                    <c:remove var="tipo" scope="session"/>
                 </c:if>
 
                 <!-- Formulario de nuevo libro -->
                 <div class="card">
                     <div class="card-body">
-                        <form action="${pageContext.request.contextPath}/admin/libros/nuevo" method="post" class="needs-validation" novalidate>
+                        <form action="${pageContext.request.contextPath}/admin/libros" method="post" class="needs-validation" novalidate>
                             <input type="hidden" name="accion" value="crear"/>
                             <!-- Campos básicos -->
                             <div class="row mb-3">

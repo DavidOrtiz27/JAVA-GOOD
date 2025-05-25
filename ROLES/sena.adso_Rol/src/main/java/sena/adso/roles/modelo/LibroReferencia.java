@@ -4,6 +4,11 @@ public class LibroReferencia extends Libro {
     private String campoAcademico;
     private boolean consultaInterna;
     
+    // Constructor por defecto
+    public LibroReferencia() {
+        super();
+    }
+    
     public LibroReferencia(String titulo, String isbn, String autor, 
                           int ejemplaresDisponibles, String campoAcademico, 
                           boolean consultaInterna) {

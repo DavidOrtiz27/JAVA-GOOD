@@ -1,325 +1,504 @@
 package sena.adso.roles.controlador;
 
-import sena.adso.roles.dao.LibroDAO;
-import sena.adso.roles.modelo.Libro;
-import sena.adso.roles.modelo.LibroFiccion;
-import sena.adso.roles.modelo.LibroNoFiccion;
-import sena.adso.roles.modelo.LibroReferencia;
-import sena.adso.roles.modelo.Usuario;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet(name = "LibroServlet", urlPatterns = {"/bibliotecario/libros/*", "/lector/catalogo/*"})
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import sena.adso.roles.dao.LibroDAO;
+import sena.adso.roles.dao.PrestamoDAO;
+import sena.adso.roles.modelo.Libro;
+import sena.adso.roles.modelo.LibroFiccion;
+import sena.adso.roles.modelo.LibroNoFiccion;
+import sena.adso.roles.modelo.LibroReferencia;
+
+@WebServlet("/admin/libros/*")
 public class LibroServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+	private LibroDAO libroDAO;
+	private PrestamoDAO prestamoDAO;
 
-    private LibroDAO libroDAO;
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		libroDAO = new LibroDAO();
+		prestamoDAO = new PrestamoDAO();
+	}
 
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        libroDAO = new LibroDAO();
-    }
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println("LibroServlet.doGet - Iniciando");
+		String action = request.getPathInfo();
+		System.out.println("Acción solicitada: " + action);
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String accion = extraerAccion(request);
+		try {
+			// Si no hay acción específica, redirigir a listar
+			if (action == null || action.equals("/")) {
+				System.out.println("Redirigiendo a listar (acción no especificada)");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
 
-        try {
-            switch (accion) {
-                case "listar":
-                    listarLibros(request, response);
-                    break;
-                case "nuevo":
-                    if (esBibliotecario(request)) {
-                        mostrarFormularioNuevo(request, response);
-                    } else {
-                        accesoDenegado(response, request);
-                    }
-                    break;
-                case "agregar": // Agregar este caso
-                    if (esBibliotecario(request)) {
-                        mostrarFormularioNuevo(request, response);
-                    } else {
-                        accesoDenegado(response, request);
-                    }
-                    break;
-                case "editar":
-                    if (esBibliotecario(request)) {
-                        mostrarFormularioEditar(request, response);
-                    } else {
-                        accesoDenegado(response, request);
-                    }
-                    break;
-                case "ver":
-                    verDetalles(request, response);
-                    break;
-                case "buscar":
-                    buscarLibros(request, response);
-                    break;
-                default:
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                    break;
-            }
-        } catch (SQLException ex) {
-            throw new ServletException(ex);
-        }
-    }
+			// Eliminar el slash inicial si existe
+			if (action.startsWith("/")) {
+				action = action.substring(1);
+			}
+			System.out.println("Acción procesada: " + action);
 
+			switch (action) {
+				case "listar":
+					System.out.println("Procesando acción: listar");
+					listarLibros(request, response);
+					break;
+				case "nuevo":
+					System.out.println("Procesando acción: nuevo");
+					mostrarFormularioNuevo(request, response);
+					break;
+				case "editar":
+					System.out.println("Procesando acción: editar");
+					mostrarFormularioEditar(request, response);
+					break;
+				case "ver":
+					System.out.println("Procesando acción: ver");
+					verLibro(request, response);
+					break;
+				default:
+					System.out.println("Acción no reconocida: " + action);
+					response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+					break;
+			}
+		} catch (SQLException e) {
+			System.err.println("Error en doGet: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al procesar la solicitud: " + e.getMessage());
+			request.getRequestDispatcher("/WEB-INF/errors/500.jsp").forward(request, response);
+		} catch (Exception e) {
+			System.err.println("Error inesperado en doGet: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error inesperado: " + e.getMessage());
+			request.getRequestDispatcher("/WEB-INF/errors/500.jsp").forward(request, response);
+		}
+	}
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String accion = extraerAccion(request);
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println("LibroServlet.doPost - Iniciando procesamiento de POST");
+		request.setCharacterEncoding("UTF-8");
+		String accion = request.getParameter("accion");
+		System.out.println("Acción recibida: " + accion);
 
-        try {
-            switch (accion) {
-                case "guardar":
-                    if (esBibliotecario(request)) {
-                        guardarLibro(request, response);
-                    } else {
-                        accesoDenegado(response, request);
-                    }
-                    break;
-                case "actualizar":
-                    if (esBibliotecario(request)) {
-                        actualizarLibro(request, response);
-                    } else {
-                        accesoDenegado(response, request);
-                    }
-                    break;
-                case "eliminar":
-                    if (esBibliotecario(request)) {
-                        eliminarLibro(request, response);
-                    } else {
-                        accesoDenegado(response, request);
-                    }
-                    break;
-                default:
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                    break;
-            }
-        } catch (SQLException ex) {
-            throw new ServletException(ex);
-        }
-    }
+		try {
+			if (accion == null || accion.trim().isEmpty()) {
+				System.err.println("No se especificó una acción");
+				request.setAttribute("error", "No se especificó una acción");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
 
-    private String extraerAccion(HttpServletRequest request) {
-        // Extrae la acción a partir del pathInfo (p.ej., /listar, /nuevo, /guardar...)
-        String path = request.getPathInfo();
-        if (path == null || path.equals("/")) {
-            return "listar";
-        }
-        return path.substring(1); // Quita la barra inicial
-    }
+			switch (accion) {
+				case "crear":
+					System.out.println("Procesando acción: crear");
+					crearLibro(request, response);
+					break;
+				case "actualizar":
+					System.out.println("Procesando acción: actualizar");
+					actualizarLibro(request, response);
+					break;
+				case "eliminar":
+					System.out.println("Procesando acción: eliminar");
+					eliminarLibro(request, response);
+					break;
+				default:
+					System.err.println("Acción no reconocida: " + accion);
+					request.setAttribute("error", "Acción no reconocida: " + accion);
+					response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+					break;
+			}
+		} catch (Exception e) {
+			System.err.println("Error en doPost: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al procesar la solicitud: " + e.getMessage());
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
+	}
 
-    private boolean esBibliotecario(HttpServletRequest request) {
-        HttpSession sesion = request.getSession(false);
-        if (sesion == null) return false;
-        Usuario usuario = (Usuario) sesion.getAttribute("usuario");
-        return usuario != null && "bibliotecario".equalsIgnoreCase(usuario.getRol());
-    }
+	private void listarLibros(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+		System.out.println("Listando libros...");
+		try {
+			List<Libro> libros = libroDAO.listarTodos();
+			System.out.println("Libros encontrados: " + libros.size());
+			request.setAttribute("libros", libros);
+			request.getRequestDispatcher("/WEB-INF/admin/libros/listar.jsp").forward(request, response);
+		} catch (SQLException e) {
+			System.err.println("Error al listar libros: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al cargar la lista de libros: " + e.getMessage());
+			request.getRequestDispatcher("/WEB-INF/errors/500.jsp").forward(request, response);
+		} catch (Exception e) {
+			System.err.println("Error inesperado al listar libros: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error inesperado al cargar la lista de libros: " + e.getMessage());
+			request.getRequestDispatcher("/WEB-INF/errors/500.jsp").forward(request, response);
+		}
+	}
 
-    private void accesoDenegado(HttpServletResponse response, HttpServletRequest request)
-            throws IOException, ServletException {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        request.getRequestDispatcher("/acceso-denegado.jsp").forward(request, response);
-    }
+	private void mostrarFormularioNuevo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println("LibroServlet.mostrarFormularioNuevo - Iniciando");
+		try {
+			// Limpiar cualquier atributo anterior
+			request.removeAttribute("error");
+			request.removeAttribute("libro");
+			request.removeAttribute("tipo");
+			request.removeAttribute("genero");
+			request.removeAttribute("premiosLiterarios");
+			request.removeAttribute("areaTematica");
+			request.removeAttribute("publicoObjetivo");
+			request.removeAttribute("campoAcademico");
+			request.removeAttribute("consultaInterna");
+			
+			System.out.println("Redirigiendo a formulario de nuevo libro");
+			String rutaJSP = "/WEB-INF/admin/libros/nuevo.jsp";
+			System.out.println("Ruta del JSP: " + rutaJSP);
+			
+			// Verificar si el archivo existe
+			File jspFile = new File(getServletContext().getRealPath(rutaJSP));
+			if (!jspFile.exists()) {
+				System.err.println("Error: El archivo JSP no existe en la ruta: " + jspFile.getAbsolutePath());
+				throw new ServletException("El archivo JSP no existe: " + rutaJSP);
+			}
+			
+			request.getRequestDispatcher(rutaJSP).forward(request, response);
+		} catch (Exception e) {
+			System.err.println("Error al mostrar formulario de nuevo libro: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al cargar el formulario: " + e.getMessage());
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
+	}
 
-    // Métodos para manejar las solicitudes GET
+	private void mostrarFormularioEditar(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+		System.out.println("LibroServlet.mostrarFormularioEditar - Iniciando");
+		try {
+			int id = Integer.parseInt(request.getParameter("id"));
+			System.out.println("ID del libro a editar: " + id);
+			
+			Libro libro = libroDAO.buscarPorId(id);
+			if (libro == null) {
+				System.err.println("Libro no encontrado con ID: " + id);
+				request.setAttribute("error", "Libro no encontrado");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
+			
+			System.out.println("Libro encontrado: " + libro.getTitulo());
+			System.out.println("Tipo de libro: " + libro.getTipoLibro());
+			
+			// Establecer el libro y su tipo
+			request.setAttribute("libro", libro);
+			
+			// Establecer campos específicos según el tipo de libro
+			if (libro instanceof LibroFiccion) {
+				LibroFiccion ficcion = (LibroFiccion) libro;
+				String genero = ficcion.getGenero();
+				String premios = ficcion.getPremiosLiterarios();
+				
+				System.out.println("Estableciendo campos de ficción:");
+				System.out.println("- Género: " + genero);
+				System.out.println("- Premios: " + premios);
+				
+				request.setAttribute("genero", genero != null ? genero : "");
+				request.setAttribute("premiosLiterarios", premios != null ? premios : "");
+			} else if (libro instanceof LibroNoFiccion) {
+				LibroNoFiccion noFiccion = (LibroNoFiccion) libro;
+				String areaTematica = noFiccion.getAreaTematica();
+				String publicoObjetivo = noFiccion.getPublicoObjetivo();
+				
+				System.out.println("Estableciendo campos de no ficción:");
+				System.out.println("- Área temática: " + areaTematica);
+				System.out.println("- Público objetivo: " + publicoObjetivo);
+				
+				request.setAttribute("areaTematica", areaTematica != null ? areaTematica : "");
+				request.setAttribute("publicoObjetivo", publicoObjetivo != null ? publicoObjetivo : "");
+			} else if (libro instanceof LibroReferencia) {
+				LibroReferencia referencia = (LibroReferencia) libro;
+				String campoAcademico = referencia.getCampoAcademico();
+				boolean consultaInterna = referencia.isConsultaInterna();
+				
+				System.out.println("Estableciendo campos de referencia:");
+				System.out.println("- Campo académico: " + campoAcademico);
+				System.out.println("- Consulta interna: " + consultaInterna);
+				
+				request.setAttribute("campoAcademico", campoAcademico != null ? campoAcademico : "");
+				request.setAttribute("consultaInterna", consultaInterna);
+			}
+			
+			// Redirigir al formulario de edición
+			request.getRequestDispatcher("/WEB-INF/admin/libros/editar.jsp").forward(request, response);
+			
+		} catch (NumberFormatException e) {
+			System.err.println("Error al parsear ID: " + e.getMessage());
+			request.setAttribute("error", "ID de libro inválido");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (SQLException e) {
+			System.err.println("Error de base de datos: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al cargar el libro: " + e.getMessage());
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (Exception e) {
+			System.err.println("Error inesperado: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error inesperado: " + e.getMessage());
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
+	}
 
-    private void listarLibros(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
-        List<Libro> libros = libroDAO.listarTodos();
-        request.setAttribute("libros", libros);
-        request.getRequestDispatcher("/WEB-INF/admin/libros/listar.jsp").forward(request, response);
-    }
+	private void verLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
+		System.out.println("Mostrando detalles del libro");
+		try {
+			int id = Integer.parseInt(request.getParameter("id"));
+			System.out.println("ID del libro a ver: " + id);
+			Libro libro = libroDAO.buscarPorId(id);
+			if (libro == null) {
+				request.setAttribute("error", "Libro no encontrado");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
+			System.out.println("Libro encontrado: " + libro.getTitulo());
+			request.setAttribute("libro", libro);
+			request.getRequestDispatcher("/WEB-INF/admin/libros/ver.jsp").forward(request, response);
+		} catch (NumberFormatException e) {
+			request.setAttribute("error", "ID de libro inválido");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
+	}
 
-    private void mostrarFormularioNuevo(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.getRequestDispatcher("/WEB-INF/admin/libros/agregar.jsp").forward(request, response);
-    }
+	private void crearLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+		System.out.println("Guardando nuevo libro...");
+		String tipo = request.getParameter("tipo");
+		System.out.println("Tipo de libro: " + tipo);
 
-    private void mostrarFormularioEditar(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Libro libro = libroDAO.buscarPorId(id);
-            if (libro == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Libro no encontrado");
-                return;
-            }
-            request.setAttribute("libro", libro);
-            request.getRequestDispatcher("/WEB-INF/libros/editar.jsp").forward(request, response);
-        } catch (NumberFormatException ex) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID inválido");
-        }
-    }
+		try {
+			Libro libro = crearLibroDesdeRequest(request, tipo);
+			System.out.println("Libro creado: " + libro.getTitulo());
+			
+			if (libroDAO.existeIsbn(libro.getIsbn())) {
+				request.setAttribute("error", "Ya existe un libro con ese ISBN");
+				request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
+				return;
+			}
 
-    private void verDetalles(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            Libro libro = libroDAO.buscarPorId(id);
-            if (libro == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Libro no encontrado");
-                return;
-            }
-            request.setAttribute("libro", libro);
-            request.getRequestDispatcher("/WEB-INF/libros/detalles.jsp").forward(request, response);
-        } catch (NumberFormatException ex) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID inválido");
-        }
-    }
+			if (libroDAO.insertar(libro)) {
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+			} else {
+				request.setAttribute("error", "Error al guardar el libro");
+				request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
+			}
+		} catch (Exception e) {
+			System.err.println("Error al guardar libro: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al guardar el libro");
+			request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
+		}
+	}
 
-    private void buscarLibros(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
-        String criterio = request.getParameter("criterio");
-        List<Libro> libros = libroDAO.buscarPorTitulo(criterio);
-        request.setAttribute("libros", libros);
-        request.getRequestDispatcher("/WEB-INF/libros/listar.jsp").forward(request, response);
-    }
+	private void actualizarLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+		System.out.println("LibroServlet.actualizarLibro - Iniciando actualización");
+		try {
+			int id = Integer.parseInt(request.getParameter("id"));
+			System.out.println("ID del libro a actualizar: " + id);
+			
+			String tipo = request.getParameter("tipo");
+			System.out.println("Tipo de libro: " + tipo);
+			
+			// Imprimir todos los parámetros recibidos
+			System.out.println("Parámetros recibidos:");
+			System.out.println("- Título: " + request.getParameter("titulo"));
+			System.out.println("- ISBN: " + request.getParameter("isbn"));
+			System.out.println("- Autor: " + request.getParameter("autor"));
+			System.out.println("- Ejemplares: " + request.getParameter("ejemplaresDisponibles"));
+			System.out.println("- Tipo: " + tipo);
+			
+			if (tipo.equals("Ficcion")) {
+				System.out.println("- Género: " + request.getParameter("genero"));
+				System.out.println("- Premios: " + request.getParameter("premiosLiterarios"));
+			} else if (tipo.equals("NoFiccion")) {
+				System.out.println("- Área temática: " + request.getParameter("areaTematica"));
+				System.out.println("- Público objetivo: " + request.getParameter("publicoObjetivo"));
+			} else if (tipo.equals("Referencia")) {
+				System.out.println("- Campo académico: " + request.getParameter("campoAcademico"));
+				System.out.println("- Consulta interna: " + request.getParameter("consultaInterna"));
+			}
+			
+			Libro libro = crearLibroDesdeRequest(request, tipo);
+			libro.setId(id);
+			
+			System.out.println("Datos del libro a actualizar:");
+			System.out.println("- Título: " + libro.getTitulo());
+			System.out.println("- ISBN: " + libro.getIsbn());
+			System.out.println("- Autor: " + libro.getAutor());
+			System.out.println("- Ejemplares: " + libro.getEjemplaresDisponibles());
+			
+			// Intentar actualizar
+			if (libroDAO.actualizar(libro)) {
+				System.out.println("Libro actualizado exitosamente");
+				request.setAttribute("mensaje", "Libro actualizado correctamente");
+				request.setAttribute("tipo", "success");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+			} else {
+				System.err.println("Error al actualizar el libro en la base de datos");
+				request.setAttribute("error", "Error al actualizar el libro");
+				request.setAttribute("libro", libro);
+				request.setAttribute("tipo", tipo);
+				
+				// Establecer atributos específicos según el tipo
+				if (libro instanceof LibroFiccion) {
+					LibroFiccion ficcion = (LibroFiccion) libro;
+					request.setAttribute("genero", ficcion.getGenero());
+					request.setAttribute("premiosLiterarios", ficcion.getPremiosLiterarios());
+				} else if (libro instanceof LibroNoFiccion) {
+					LibroNoFiccion noFiccion = (LibroNoFiccion) libro;
+					request.setAttribute("areaTematica", noFiccion.getAreaTematica());
+					request.setAttribute("publicoObjetivo", noFiccion.getPublicoObjetivo());
+				} else if (libro instanceof LibroReferencia) {
+					LibroReferencia referencia = (LibroReferencia) libro;
+					request.setAttribute("campoAcademico", referencia.getCampoAcademico());
+					request.setAttribute("consultaInterna", referencia.isConsultaInterna());
+				}
+				
+				request.getRequestDispatcher("/WEB-INF/admin/libros/editar.jsp").forward(request, response);
+			}
+		} catch (NumberFormatException e) {
+			System.err.println("Error al parsear ID: " + e.getMessage());
+			request.setAttribute("error", "ID de libro inválido");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (SQLException e) {
+			System.err.println("Error de base de datos: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al actualizar el libro: " + e.getMessage());
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
+	}
 
-    // Métodos para manejar las solicitudes POST
+	private void eliminarLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+		System.out.println("Eliminando libro...");
+		try {
+			int id = Integer.parseInt(request.getParameter("id"));
+			System.out.println("ID del libro a eliminar: " + id);
+			
+			// Verificar si el libro existe
+			Libro libro = libroDAO.buscarPorId(id);
+			if (libro == null) {
+				request.setAttribute("error", "El libro no existe");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
+			
+			// Verificar si tiene préstamos activos
+			if (libroDAO.tienePrestamosActivos(id)) {
+				request.setAttribute("error", "No se puede eliminar el libro porque tiene préstamos activos");
+				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+				return;
+			}
+			
+			// Intentar eliminar el libro
+			if (libroDAO.eliminar(id)) {
+				request.setAttribute("mensaje", "Libro eliminado correctamente");
+				request.setAttribute("tipo", "success");
+			} else {
+				request.setAttribute("error", "Error al eliminar el libro");
+			}
+			
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (NumberFormatException e) {
+			System.err.println("Error al parsear ID: " + e.getMessage());
+			request.setAttribute("error", "ID de libro inválido");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (SQLException e) {
+			System.err.println("Error de base de datos: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error al eliminar el libro: " + e.getMessage());
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		} catch (Exception e) {
+			System.err.println("Error inesperado: " + e.getMessage());
+			e.printStackTrace();
+			request.setAttribute("error", "Error inesperado al eliminar el libro");
+			response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
+		}
+	}
 
-    private void guardarLibro(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException, ServletException {
-        String titulo = request.getParameter("titulo");
-        String isbn = request.getParameter("isbn");
-        String autor = request.getParameter("autor");
-        String tipoStr = request.getParameter("tipo");
-        String ejemplaresStr = request.getParameter("ejemplares");
+	private Libro crearLibroDesdeRequest(HttpServletRequest request, String tipo) {
+		System.out.println("LibroServlet.crearLibroDesdeRequest - Iniciando");
+		System.out.println("Tipo de libro: " + tipo);
+		
+		String titulo = request.getParameter("titulo");
+		String isbn = request.getParameter("isbn");
+		String autor = request.getParameter("autor");
+		int ejemplaresDisponibles = Integer.parseInt(request.getParameter("ejemplaresDisponibles"));
+		
+		System.out.println("Datos básicos:");
+		System.out.println("- Título: " + titulo);
+		System.out.println("- ISBN: " + isbn);
+		System.out.println("- Autor: " + autor);
+		System.out.println("- Ejemplares: " + ejemplaresDisponibles);
 
-        if (titulo == null || isbn == null || autor == null || tipoStr == null || ejemplaresStr == null
-                || titulo.isEmpty() || isbn.isEmpty() || autor.isEmpty() || tipoStr.isEmpty() || ejemplaresStr.isEmpty()) {
-            request.setAttribute("mensaje", "Todos los campos son obligatorios");
-            request.setAttribute("tipo", "danger");
-            request.getRequestDispatcher("/WEB-INF/admin/libros/agregar.jsp").forward(request, response);
-            return;
-        }
+		Libro libro;
+		switch (tipo) {
+			case "Ficcion":
+				System.out.println("Creando libro de ficción...");
+				LibroFiccion ficcion = new LibroFiccion();
+				ficcion.setTitulo(titulo);
+				ficcion.setIsbn(isbn);
+				ficcion.setAutor(autor);
+				ficcion.setEjemplaresDisponibles(ejemplaresDisponibles);
+				ficcion.setGenero(request.getParameter("genero"));
+				ficcion.setPremiosLiterarios(request.getParameter("premiosLiterarios"));
+				System.out.println("Campos específicos de ficción:");
+				System.out.println("- Género: " + ficcion.getGenero());
+				System.out.println("- Premios: " + ficcion.getPremiosLiterarios());
+				libro = ficcion;
+				break;
+				
+			case "NoFiccion":
+				System.out.println("Creando libro de no ficción...");
+				LibroNoFiccion noFiccion = new LibroNoFiccion();
+				noFiccion.setTitulo(titulo);
+				noFiccion.setIsbn(isbn);
+				noFiccion.setAutor(autor);
+				noFiccion.setEjemplaresDisponibles(ejemplaresDisponibles);
+				noFiccion.setAreaTematica(request.getParameter("areaTematica"));
+				noFiccion.setPublicoObjetivo(request.getParameter("publicoObjetivo"));
+				System.out.println("Campos específicos de no ficción:");
+				System.out.println("- Área temática: " + noFiccion.getAreaTematica());
+				System.out.println("- Público objetivo: " + noFiccion.getPublicoObjetivo());
+				libro = noFiccion;
+				break;
+				
+			case "Referencia":
+				System.out.println("Creando libro de referencia...");
+				LibroReferencia referencia = new LibroReferencia();
+				referencia.setTitulo(titulo);
+				referencia.setIsbn(isbn);
+				referencia.setAutor(autor);
+				referencia.setEjemplaresDisponibles(ejemplaresDisponibles);
+				referencia.setCampoAcademico(request.getParameter("campoAcademico"));
+				referencia.setConsultaInterna(request.getParameter("consultaInterna") != null);
+				System.out.println("Campos específicos de referencia:");
+				System.out.println("- Campo académico: " + referencia.getCampoAcademico());
+				System.out.println("- Consulta interna: " + referencia.isConsultaInterna());
+				libro = referencia;
+				break;
+				
+			default:
+				System.err.println("Tipo de libro no válido: " + tipo);
+				throw new IllegalArgumentException("Tipo de libro no válido: " + tipo);
+		}
 
-        try {
-            int ejemplares = Integer.parseInt(ejemplaresStr);
-            Libro libro;
-
-            switch (tipoStr) {
-                case "Ficcion":
-                    String genero = request.getParameter("genero");
-                    String premiosLiterarios = request.getParameter("premios_literarios");
-                    libro = new LibroFiccion(titulo, isbn, autor, ejemplares, genero, premiosLiterarios);
-                    break;
-                case "NoFiccion":
-                    String areaTematica = request.getParameter("area_tematica");
-                    String publicoObjetivo = request.getParameter("publico_objetivo");
-                    libro = new LibroNoFiccion(titulo, isbn, autor, ejemplares, areaTematica, publicoObjetivo);
-                    break;
-                case "Referencia":
-                    String campoAcademico = request.getParameter("campo_academico");
-                    boolean consultaInterna = Boolean.parseBoolean(request.getParameter("consulta_interna"));
-                    libro = new LibroReferencia(titulo, isbn, autor, ejemplares, campoAcademico, consultaInterna);
-                    break;
-                default:
-                    request.setAttribute("mensaje", "Tipo de libro no válido");
-                    request.setAttribute("tipo", "danger");
-                    request.getRequestDispatcher("/WEB-INF/admin/libros/agregar.jsp").forward(request, response);
-                    return;
-            }
-
-            if (libroDAO.existeIsbn(isbn)) {
-                request.setAttribute("mensaje", "Ya existe un libro con ese ISBN");
-                request.setAttribute("tipo", "danger");
-                request.getRequestDispatcher("/WEB-INF/admin/libros/agregar.jsp").forward(request, response);
-                return;
-            }
-
-            boolean resultado = libroDAO.insertar(libro);
-
-            if (resultado) {
-                response.sendRedirect(request.getContextPath() + "/bibliotecario//libros/listar");
-            } else {
-                request.setAttribute("mensaje", "Error al guardar el libro");
-                request.setAttribute("tipo", "danger");
-                request.getRequestDispatcher("/WEB-INF/libros/listar.jsp").forward(request, response);
-            }
-        } catch (NumberFormatException ex) {
-            request.setAttribute("mensaje", "Número de ejemplares inválido");
-            request.setAttribute("tipo", "danger");
-            request.getRequestDispatcher("/WEB-INF/libros/agregar.jsp").forward(request, response);
-        }
-    }
-
-    private void actualizarLibro(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException, ServletException {
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            String titulo = request.getParameter("titulo");
-            String isbn = request.getParameter("isbn");
-            String autor = request.getParameter("autor");
-            String tipoStr = request.getParameter("tipo");
-            int ejemplares = Integer.parseInt(request.getParameter("ejemplares"));
-
-            Libro libro;
-
-            switch (tipoStr) {
-                case "Ficcion":
-                    String genero = request.getParameter("genero");
-                    String premiosLiterarios = request.getParameter("premios_literarios");
-                    libro = new LibroFiccion(titulo, isbn, autor, ejemplares, genero, premiosLiterarios);
-                    break;
-                case "NoFiccion":
-                    String areaTematica = request.getParameter("area_tematica");
-                    String publicoObjetivo = request.getParameter("publico_objetivo");
-                    libro = new LibroNoFiccion(titulo, isbn, autor, ejemplares, areaTematica, publicoObjetivo);
-                    break;
-                case "Referencia":
-                    String campoAcademico = request.getParameter("campo_academico");
-                    boolean consultaInterna = Boolean.parseBoolean(request.getParameter("consulta_interna"));
-                    libro = new LibroReferencia(titulo, isbn, autor, ejemplares, campoAcademico, consultaInterna);
-                    break;
-                default:
-                    request.setAttribute("mensaje", "Tipo de libro no válido");
-                    request.setAttribute("tipo", "danger");
-                    request.getRequestDispatcher("/WEB-INF/admin/libros/editar.jsp").forward(request, response);
-                    return;
-            }
-
-            libro.setId(id);
-
-            boolean resultado = libroDAO.actualizar(libro);
-
-            if (resultado) {
-                // Redirigir con el id para cargar el libro actualizado
-                response.sendRedirect(request.getContextPath() + "/bibliotecario/libros/editar?id=" + id);
-            } else {
-                request.setAttribute("mensaje", "Error al actualizar el libro");
-                request.setAttribute("tipo", "danger");
-                request.getRequestDispatcher("/WEB-INF/admin/libros/listar.jsp").forward(request, response);
-            }
-        } catch (NumberFormatException ex) {
-            request.setAttribute("mensaje", "ID o número de ejemplares inválidos");
-            request.setAttribute("tipo", "danger");
-            request.getRequestDispatcher("/WEB-INF/admin/libros/listar.jsp").forward(request, response);
-        }
-    }
-
-
-    private void eliminarLibro(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException {
-        try {
-            int id = Integer.parseInt(request.getParameter("id"));
-            boolean resultado = libroDAO.eliminar(id);
-            if (resultado) {
-                response.sendRedirect(request.getContextPath() + "/bibliotecario/libros/listar");
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error al eliminar el libro");
-            }
-        } catch (NumberFormatException ex) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID inválido");
-        }
-    }
+		return libro;
+	}
 }

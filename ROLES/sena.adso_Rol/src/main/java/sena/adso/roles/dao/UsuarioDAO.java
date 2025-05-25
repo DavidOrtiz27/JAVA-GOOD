@@ -1,10 +1,15 @@
 package sena.adso.roles.dao;
 
-import sena.adso.roles.modelo.Usuario;
-import sena.adso.roles.util.ConexionBD;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import sena.adso.roles.modelo.Usuario;
+import sena.adso.roles.util.ConexionBD;
 
 public class UsuarioDAO {
     
@@ -202,6 +207,20 @@ public class UsuarioDAO {
             stmt.setInt(2, usuario.getId());
 
             return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public int contarUsuariosActivos() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE rol = 'lector'";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
         }
     }
 }

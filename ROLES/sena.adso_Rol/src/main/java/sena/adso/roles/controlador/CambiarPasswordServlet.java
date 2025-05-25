@@ -1,16 +1,16 @@
 package sena.adso.roles.controlador;
 
-import sena.adso.roles.modelo.Usuario;
-import sena.adso.roles.modelo.RolUsuario;
-import sena.adso.roles.dao.UsuarioDAO;
-
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import sena.adso.roles.dao.UsuarioDAO;
+import sena.adso.roles.modelo.Usuario;
 
 @WebServlet("/cambiar-password")
 public class CambiarPasswordServlet extends HttpServlet {
@@ -43,7 +43,7 @@ public class CambiarPasswordServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         
         if (session == null || session.getAttribute("usuario") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
         
@@ -90,7 +90,7 @@ public class CambiarPasswordServlet extends HttpServlet {
                 session.setAttribute("usuario", usuario);
                 
                 // Redirigir según el rol
-                String destino = usuario.esBibliotecario() ? "/bibliotecario/dashboard" : "/lector/dashboard";
+                String destino = usuario.esBibliotecario() ? "/admin/panel" : "/lector/dashboard";
                 setMensajeExito(request, "Contraseña actualizada exitosamente");
                 response.sendRedirect(request.getContextPath() + destino);
                 return;

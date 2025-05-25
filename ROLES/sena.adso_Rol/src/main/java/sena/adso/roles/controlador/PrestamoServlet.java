@@ -1,21 +1,23 @@
 package sena.adso.roles.controlador;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import sena.adso.roles.dao.LibroDAO;
+import sena.adso.roles.dao.PrestamoDAO;
 import sena.adso.roles.modelo.Prestamo;
 import sena.adso.roles.modelo.Usuario;
-import sena.adso.roles.dao.PrestamoDAO;
-import sena.adso.roles.dao.LibroDAO;
 
-@WebServlet(name = "PrestamoServlet", urlPatterns = {"/bibliotecario/prestamos/*", "/lector/prestamos/*"})
+@WebServlet(name = "PrestamoServlet", urlPatterns = {"/admin/prestamos/*", "/lector/prestamos/*"})
 public class PrestamoServlet extends HttpServlet {
     
     private PrestamoDAO prestamoDAO;
@@ -75,11 +77,14 @@ public class PrestamoServlet extends HttpServlet {
         
         try {
             switch (accion) {
-                case "realizar":
+                case "crear":
                     realizarPrestamo(request, response);
                     break;
                 case "devolver":
                     procesarDevolucion(request, response);
+                    break;
+                case "eliminar":
+                    eliminarPrestamo(request, response);
                     break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -110,7 +115,7 @@ public class PrestamoServlet extends HttpServlet {
         
         request.setAttribute("prestamos", prestamos);
         String vista = esBibliotecario(request) ? 
-                      "/WEB-INF/bibliotecario/prestamos.jsp" : 
+                      "/WEB-INF/admin/prestamos/listar.jsp" : 
                       "/WEB-INF/lector/mis-prestamos.jsp";
         request.getRequestDispatcher(vista).forward(request, response);
     }
@@ -118,7 +123,7 @@ public class PrestamoServlet extends HttpServlet {
     private void mostrarFormularioPrestamo(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
         request.setAttribute("librosDisponibles", libroDAO.listarDisponibles());
-        request.getRequestDispatcher("/WEB-INF/bibliotecario/formulario-prestamo.jsp")
+        request.getRequestDispatcher("/WEB-INF/admin/prestamos/nuevo.jsp")
                .forward(request, response);
     }
     
@@ -127,7 +132,7 @@ public class PrestamoServlet extends HttpServlet {
         try {
             int libroId = Integer.parseInt(request.getParameter("libro_id"));
             int usuarioId = Integer.parseInt(request.getParameter("usuario_id"));
-            Date fechaPrestamo = new Date(System.currentTimeMillis());
+            java.sql.Date fechaPrestamo = new java.sql.Date(System.currentTimeMillis());
             
             if (prestamoDAO.tienePrestamosPendientes(usuarioId)) {
                 request.setAttribute("mensaje", "El usuario tiene préstamos pendientes de devolución");
@@ -176,7 +181,7 @@ public class PrestamoServlet extends HttpServlet {
             
             if (prestamo != null && "ACTIVO".equals(prestamo.getEstado())) {
                 request.setAttribute("prestamo", prestamo);
-                request.getRequestDispatcher("/WEB-INF/bibliotecario/formulario-devolucion.jsp")
+                request.getRequestDispatcher("/WEB-INF/admin/prestamos/devolver.jsp")
                        .forward(request, response);
             } else {
                 request.setAttribute("mensaje", "Préstamo no encontrado o ya devuelto");
@@ -236,7 +241,7 @@ public class PrestamoServlet extends HttpServlet {
         
         request.setAttribute("historial", historial);
         String vista = esBibliotecario(request) ? 
-                      "/WEB-INF/bibliotecario/historial-prestamos.jsp" : 
+                      "/WEB-INF/admin/prestamos/historial.jsp" : 
                       "/WEB-INF/lector/mi-historial.jsp";
         request.getRequestDispatcher(vista).forward(request, response);
     }
@@ -256,5 +261,26 @@ public class PrestamoServlet extends HttpServlet {
         request.setAttribute("mensaje", "Error en la base de datos. Por favor, inténtelo más tarde.");
         request.setAttribute("tipo", "danger");
         request.getRequestDispatcher("/WEB-INF/error.jsp").forward(request, response);
+    }
+
+    private void eliminarPrestamo(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, ServletException, IOException {
+        try {
+            int id = Integer.parseInt(request.getParameter("id"));
+            boolean eliminado = prestamoDAO.eliminar(id);
+            
+            if (eliminado) {
+                request.getSession().setAttribute("mensaje", "Préstamo eliminado correctamente");
+                request.getSession().setAttribute("tipo", "success");
+            } else {
+                request.getSession().setAttribute("mensaje", "Error al eliminar el préstamo");
+                request.getSession().setAttribute("tipo", "danger");
+            }
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("mensaje", "ID de préstamo inválido");
+            request.getSession().setAttribute("tipo", "danger");
+        }
+        
+        response.sendRedirect(request.getContextPath() + "/admin/prestamos/listar");
     }
 }

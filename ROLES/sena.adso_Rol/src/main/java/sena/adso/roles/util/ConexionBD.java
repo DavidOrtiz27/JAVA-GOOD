@@ -20,11 +20,25 @@ public class ConexionBD {
      */
     public static Connection getConnection() throws SQLException {
         try {
+            System.out.println("=== Iniciando conexión a la base de datos XAMPP ===");
+            System.out.println("URL: " + JDBC_URL);
+            System.out.println("Usuario: " + JDBC_USER);
+            
             // Registrar el driver de MySQL
             Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
+            System.out.println("✓ Driver MySQL cargado correctamente");
+            
+            Connection conn = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
+            System.out.println("✓ Conexión establecida correctamente con XAMPP MySQL");
+            return conn;
         } catch (ClassNotFoundException ex) {
+            System.out.println("✗ Error al cargar el driver de MySQL: " + ex.getMessage());
             throw new SQLException("Error al cargar el driver de MySQL", ex);
+        } catch (SQLException ex) {
+            System.out.println("✗ Error al conectar a la base de datos XAMPP: " + ex.getMessage());
+            System.out.println("Código de error SQL: " + ex.getErrorCode());
+            System.out.println("Estado SQL: " + ex.getSQLState());
+            throw ex;
         }
     }
     
@@ -36,8 +50,9 @@ public class ConexionBD {
         if (conn != null) {
             try {
                 conn.close();
+                System.out.println("✓ Conexión cerrada correctamente");
             } catch (SQLException ex) {
-                System.out.println("Error al cerrar la conexión: " + ex.getMessage());
+                System.out.println("✗ Error al cerrar la conexión: " + ex.getMessage());
             }
         }
     }

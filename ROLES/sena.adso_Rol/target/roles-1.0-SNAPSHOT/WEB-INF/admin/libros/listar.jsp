@@ -2,234 +2,248 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
-<html lang="es" class="h-100">
+<html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <title>Listado de Libros - Biblioteca Duitama</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Libros - Biblioteca Duitama</title>
 
     <!-- Estilos Bootstrap e íconos -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
-
-    <!-- Estilos personalizados -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    
     <style>
-        table {
-            background-color: #fff;
-            width: 100% !important;
-            min-width: 1200px;
-        }
-        thead {
-            background-color: #343a40;
+        .sidebar {
+            min-height: 100vh;
+            background: #2c3e50;
             color: white;
         }
-        th:nth-child(2), td:nth-child(2) { min-width: 220px; }
-        th:nth-child(4), td:nth-child(4) { min-width: 180px; }
-        th:nth-child(7), td:nth-child(7),
-        th:nth-child(8), td:nth-child(8),
-        th:nth-child(9), td:nth-child(9),
-        th:nth-child(10), td:nth-child(10),
-        th:nth-child(11), td:nth-child(11),
-        th:nth-child(12), td:nth-child(12) { min-width: 140px; }
-        th:last-child, td:last-child {
-            min-width: 110px;
-            text-align: center;
+        .sidebar .nav-link {
+            color: rgba(255,255,255,.8);
+            padding: 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,.1);
+        }
+        .sidebar .nav-link.active {
+            background: #34495e;
+            color: white;
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            background: #f8f9fa;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 
-<body class="d-flex flex-column h-100 bg-light">
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand navbar-dark bg-dark shadow-sm">
+<body>
     <div class="container-fluid">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/admin/panelAdmin">
-            <i class="bi bi-house-fill"></i> Biblioteca Duitama
-        </a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/admin/panelAdmin">
-                        <i class="bi bi-speedometer2"></i> Inicio
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0 sidebar">
+                <div class="d-flex flex-column p-3">
+                    <a href="${pageContext.request.contextPath}/admin/panel" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                        <i class="bi bi-book fs-4 me-2"></i>
+                        <span class="fs-4">Biblioteca</span>
                     </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/bibliotecario/prestamos">
-                        <i class="bi bi-journal-bookmark-fill"></i> Préstamos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/bibliotecario/usuarios">
-                        <i class="bi bi-people-fill"></i> Usuarios
-                    </a>
-                </li>
-            </ul>
-
-            <div class="d-flex align-items-center">
-                <span class="navbar-text text-white me-3">
-                    <i class="bi bi-person-circle"></i> ${sessionScope.usuario.nombre}
-                </span>
-                <a href="${pageContext.request.contextPath}/logout.jsp" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
-                </a>
+                    <hr class="text-white">
+                    <ul class="nav nav-pills flex-column mb-auto">
+                        <li class="nav-item">
+                            <a href="${pageContext.request.contextPath}/admin/panel" class="nav-link text-white">
+                                <i class="bi bi-speedometer2"></i>Panel Principal
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/admin/libros/listar" class="nav-link active">
+                                <i class="bi bi-book"></i>Libros
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/admin/prestamos" class="nav-link text-white">
+                                <i class="bi bi-journal-text"></i>Préstamos
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/admin/usuarios" class="nav-link text-white">
+                                <i class="bi bi-people"></i>Usuarios
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="text-white">
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle fs-4 me-2"></i>
+                            <strong>${sessionScope.usuario.nombre}</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/cambiar-password">
+                                <i class="bi bi-key me-2"></i>Cambiar Contraseña
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/logout">
+                                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-</nav>
 
-<!-- Contenido principal -->
-<main class="flex-grow-1 py-1">
-    <div class="container-fluid">
-        <h1 class="mb-4 text-center fw-bold text-secondary">Listado de Libros</h1>
+            <!-- Contenido principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Gestión de Libros</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a href="${pageContext.request.contextPath}/admin/libros/nuevo" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Nuevo Libro
+                        </a>
+                    </div>
+                </div>
 
-        <div class="mb-4 text-end">
-            <a href="${pageContext.request.contextPath}/bibliotecario/libros/agregar" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> Agregar Nuevo Libro
-            </a>
-        </div>
+                <!-- Mensajes -->
+                <c:if test="${not empty mensaje}">
+                    <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                        ${mensaje}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </c:if>
 
-        <c:choose>
-            <c:when test="${not empty libros}">
-                <div class="table-responsive">
-                    <table id="tablaLibros" class="table table-bordered table-striped table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Título</th>
-                                <th>ISBN</th>
-                                <th>Autor</th>
-                                <th>Ejemplares Disponibles</th>
-                                <th>Tipo</th>
-                                <th>Premios Literarios (Ficción)</th>
-                                <th>Género (Ficción)</th>
-                                <th>Área Temática (No Ficción)</th>
-                                <th>Público Objetivo (No Ficción)</th>
-                                <th>Campo Académico (Referencia)</th>
-                                <th>Disponible para Préstamo (Referencia)</th>
-                                <th>Opciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="libro" items="${libros}">
-                                <tr>
-                                    <td>${libro.id}</td>
-                                    <td>${libro.titulo}</td>
-                                    <td>${libro.isbn}</td>
-                                    <td>${libro.autor}</td>
-                                    <td>${libro.ejemplaresDisponibles}</td>
-                                    <td>${libro.tipoLibro}</td>
-
-                                    <c:choose>
-                                        <c:when test="${libro.tipoLibro == 'Ficcion'}">
-                                            <td>${libro.premiosLiterarios}</td>
-                                            <td>${libro.genero}</td>
-                                            <td>-</td><td>-</td><td>-</td><td>-</td>
-                                        </c:when>
-                                        <c:when test="${libro.tipoLibro == 'NoFiccion'}">
-                                            <td>-</td><td>-</td>
-                                            <td>${libro.areaTematica}</td>
-                                            <td>${libro.publicoObjetivo}</td>
-                                            <td>-</td><td>-</td>
-                                        </c:when>
-                                        <c:when test="${libro.tipoLibro == 'Referencia'}">
-                                            <td>-</td><td>-</td><td>-</td><td>-</td>
-                                            <td>${libro.campoAcademico}</td>
+                <!-- Tabla de libros -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Autor</th>
+                                        <th>Categoría</th>
+                                        <th>Ejemplares</th>
+                                        <th>Disponibles</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${libros}" var="libro">
+                                        <tr>
+                                            <td>${libro.id}</td>
+                                            <td>${libro.titulo}</td>
+                                            <td>${libro.autor}</td>
+                                            <td>${libro.tipoLibro}</td>
+                                            <td>${libro.ejemplaresDisponibles}</td>
+                                            <td>${libro.estaDisponible() ? 'Sí' : 'No'}</td>
                                             <td>
                                                 <c:choose>
-                                                    <c:when test="${libro.consultaInterna}">Si</c:when>
-                                                    <c:otherwise>No</c:otherwise>
+                                                    <c:when test="${libro.estaDisponible()}">
+                                                        <span class="badge bg-success">Disponible</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge bg-danger">No disponible</span>
+                                                    </c:otherwise>
                                                 </c:choose>
                                             </td>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <td colspan="6" class="text-center">-</td>
-                                        </c:otherwise>
-                                    </c:choose>
-
-                                    <td>
-                                        <a href="${pageContext.request.contextPath}/admin/libros/editar?id=${libro.id}" class="btn btn-sm btn-warning" title="Editar">
-                                            <i class="bi bi-pencil-fill"></i>
-                                        </a>
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-danger ms-1 btn-eliminar"
-                                            title="Eliminar"
-                                            data-id="${libro.id}"
-                                            data-titulo="${libro.titulo}">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="${pageContext.request.contextPath}/admin/libros/editar?id=${libro.id}" 
+                                                       class="btn btn-sm btn-warning" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            onclick="confirmarEliminacion('${libro.id}', '${libro.titulo}', '${libro.autor}', '${libro.isbn}', '${libro.tipoLibro}', '${libro.ejemplaresDisponibles}')" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </c:when>
-            <c:otherwise>
-                <div class="alert alert-info text-center" role="alert">
-                    No hay libros registrados en el sistema.
-                </div>
-            </c:otherwise>
-        </c:choose>
+            </main>
+        </div>
     </div>
-</main>
 
-<!-- Modal Eliminar -->
-<div class="modal fade" id="modalEliminarLibro" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="formEliminarLibro" method="post" action="${pageContext.request.contextPath}/bibliotecario/libros/eliminar">
-            <input type="hidden" name="id" id="idEliminarLibro" />
+    <!-- Modal de Confirmación de Eliminación -->
+    <div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1" aria-labelledby="modalConfirmarEliminacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalConfirmarEliminacionLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    ¿Está seguro que desea eliminar este libro?
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        ¿Está seguro que desea eliminar este libro?
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title" id="modalLibroTitulo"></h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Autor:</strong> <span id="modalLibroAutor"></span></p>
+                                    <p class="mb-1"><strong>ISBN:</strong> <span id="modalLibroIsbn"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Tipo:</strong> <span id="modalLibroTipo"></span></p>
+                                    <p class="mb-1"><strong>Ejemplares:</strong> <span id="modalLibroEjemplares"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Esta acción no se puede deshacer.
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                    <form id="formEliminar" action="${pageContext.request.contextPath}/admin/libros/eliminar" method="post" style="display: inline;">
+                        <input type="hidden" name="id" id="libroIdEliminar">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-2"></i>Eliminar
+                        </button>
+                    </form>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<!-- Scripts -->
-<script>
-    function abrirModalEliminar(idLibro) {
-        document.getElementById('idEliminarLibro').value = idLibro;
-        var modalEliminar = new bootstrap.Modal(document.getElementById('modalEliminarLibro'));
-        modalEliminar.show();
-    }
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-
-<script>
-    $(document).ready(function () {
-        $('#tablaLibros').DataTable({
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
-            }
-        });
-
-        $('.btn-eliminar').on('click', function () {
-            const id = $(this).data('id');
-            abrirModalEliminar(id);
-        });
-    });
-</script>
-
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para confirmar eliminación
+        function confirmarEliminacion(id, titulo, autor, isbn, tipo, ejemplares) {
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));
+            
+            // Actualizar información en el modal
+            document.getElementById('modalLibroTitulo').textContent = titulo;
+            document.getElementById('modalLibroAutor').textContent = autor;
+            document.getElementById('modalLibroIsbn').textContent = isbn;
+            document.getElementById('modalLibroTipo').textContent = tipo;
+            document.getElementById('modalLibroEjemplares').textContent = ejemplares;
+            
+            // Actualizar ID en el formulario
+            document.getElementById('libroIdEliminar').value = id;
+            
+            modal.show();
+        }
+    </script>
 </body>
 </html>

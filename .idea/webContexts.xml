@@ -4,6 +4,7 @@
     <option name="state">
       <map>
         <entry key="file://$PROJECT_DIR$/ROLES/sena.adso_Rol/src/main/webapp/WEB-INF/admin/libros/editar.jsp" value="file://$PROJECT_DIR$/ROLES/sena.adso_Rol/src/main/webapp/WEB-INF/admin/libros" />
+        <entry key="file://$PROJECT_DIR$/ROLES/sena.adso_Rol/src/main/webapp/WEB-INF/admin/libros/listar.jsp" value="file://$PROJECT_DIR$/ROLES/sena.adso_Rol/src/main/webapp/WEB-INF/admin/libros" />
       </map>
     </option>
   </component>

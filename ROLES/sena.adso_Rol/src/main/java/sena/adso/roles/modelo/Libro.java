@@ -7,7 +7,6 @@ public abstract class Libro {
     private String autor;
     private int ejemplaresDisponibles;
     private boolean prestado;
-    private String tipo;
 
     // Constructor por defecto
     public Libro() {
@@ -72,14 +71,6 @@ public abstract class Libro {
         this.prestado = prestado;
     }
 
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
     // Método abstracto que debe ser implementado por las clases hijas
     public abstract String getTipoLibro();
 
@@ -120,7 +111,6 @@ public abstract class Libro {
                 ", autor='" + autor + '\'' +
                 ", ejemplaresDisponibles=" + ejemplaresDisponibles +
                 ", prestado=" + prestado +
-                ", tipo='" + tipo + '\'' +
                 '}';
     }
 }

@@ -13,6 +13,8 @@ public class Prestamo {
     // Campos adicionales para mostrar información relacionada
     private String tituloLibro;
     private String nombreUsuario;
+    private String libroTitulo;
+    private String usuarioNombre;
     
     // Constructor por defecto
     public Prestamo() {
@@ -51,4 +53,20 @@ public class Prestamo {
     
     public String getNombreUsuario() { return nombreUsuario; }
     public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
+
+    public String getLibroTitulo() {
+        return libroTitulo;
+    }
+
+    public void setLibroTitulo(String libroTitulo) {
+        this.libroTitulo = libroTitulo;
+    }
+
+    public String getUsuarioNombre() {
+        return usuarioNombre;
+    }
+
+    public void setUsuarioNombre(String usuarioNombre) {
+        this.usuarioNombre = usuarioNombre;
+    }
 }

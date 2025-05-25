@@ -4,6 +4,11 @@ public class LibroFiccion extends Libro {
     private String genero;
     private String premiosLiterarios;
 
+    // Constructor por defecto
+    public LibroFiccion() {
+        super();
+    }
+
     public LibroFiccion(String titulo, String isbn, String autor,
                        int ejemplaresDisponibles, String genero,
                        String premiosLiterarios) {

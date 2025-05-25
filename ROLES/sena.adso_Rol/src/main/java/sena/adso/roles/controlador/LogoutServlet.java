@@ -1,6 +1,7 @@
 package sena.adso.roles.controlador;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -29,7 +30,7 @@ public class LogoutServlet extends HttpServlet {
         }
         
         // Redirigir a la página de login
-        response.sendRedirect(request.getContextPath() + "/public/login.jsp");
+        response.sendRedirect(request.getContextPath() + "/auth/login");
     }
 
     /**

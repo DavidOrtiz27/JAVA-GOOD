@@ -4,22 +4,16 @@ public class LibroNoFiccion extends Libro {
     private String areaTematica;
     private String publicoObjetivo;
     
-    // Constructor predeterminado necesario para JPA/Hibernate
+    // Constructor por defecto
     public LibroNoFiccion() {
         super();
-        setTipo("NoFiccion");
     }
     
     // Constructor principal
     public LibroNoFiccion(String titulo, String isbn, String autor, 
                          int ejemplaresDisponibles, String areaTematica, 
                          String publicoObjetivo) {
-        super();
-        setTitulo(titulo);
-        setIsbn(isbn);
-        setAutor(autor);
-        setEjemplaresDisponibles(ejemplaresDisponibles);
-        setTipo("NoFiccion");
+        super(titulo, isbn, autor, ejemplaresDisponibles);
         this.areaTematica = areaTematica;
         this.publicoObjetivo = publicoObjetivo;
     }

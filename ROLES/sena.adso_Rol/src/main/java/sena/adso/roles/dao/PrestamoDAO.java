@@ -1,10 +1,15 @@
 package sena.adso.roles.dao;
 
-import sena.adso.roles.modelo.Prestamo;
-import sena.adso.roles.util.ConexionBD;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import sena.adso.roles.modelo.Prestamo;
+import sena.adso.roles.util.ConexionBD;
 
 public class PrestamoDAO {
     
@@ -178,6 +183,68 @@ public class PrestamoDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, usuarioId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    prestamos.add(crearPrestamoDesdeResultSet(rs));
+                }
+            }
+        }
+        return prestamos;
+    }
+
+    public boolean eliminar(int id) throws SQLException {
+        String sql = "DELETE FROM prestamos WHERE id = ?";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public int contarPrestamosActivos() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM prestamos WHERE estado = 'ACTIVO'";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
+        }
+    }
+
+    public int contarPrestamosVencidos() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM prestamos WHERE estado = 'ACTIVO' AND fecha_prestamo < DATE_SUB(CURRENT_DATE, INTERVAL 15 DAY)";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
+        }
+    }
+
+    public List<Prestamo> listarUltimosPrestamos(int limite) throws SQLException {
+        List<Prestamo> prestamos = new ArrayList<>();
+        String sql = "SELECT p.*, l.titulo as titulo_libro, u.nombre as nombre_usuario " +
+                    "FROM prestamos p " +
+                    "JOIN libros l ON p.libro_id = l.id " +
+                    "JOIN usuarios u ON p.usuario_id = u.id " +
+                    "ORDER BY p.fecha_prestamo DESC " +
+                    "LIMIT ?";
+        
+        try (Connection conn = ConexionBD.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, limite);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

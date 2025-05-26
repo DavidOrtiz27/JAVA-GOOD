@@ -120,9 +120,29 @@
                     </div>
                 </c:if>
 
-                <!-- Tabla de usuarios -->
-                <div class="card">
-                    <div class="card-body">
+                <!-- Pestañas -->
+                <ul class="nav nav-tabs mb-4" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="todos-tab" data-bs-toggle="tab" data-bs-target="#todos" type="button" role="tab">
+                            Todos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="bibliotecarios-tab" data-bs-toggle="tab" data-bs-target="#bibliotecarios" type="button" role="tab">
+                            Bibliotecarios
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lectores-tab" data-bs-toggle="tab" data-bs-target="#lectores" type="button" role="tab">
+                            Lectores
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Contenido de las pestañas -->
+                <div class="tab-content" id="userTabsContent">
+                    <!-- Pestaña Todos -->
+                    <div class="tab-pane fade show active" id="todos" role="tabpanel">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead>
@@ -131,37 +151,134 @@
                                         <th>Nombre</th>
                                         <th>Email</th>
                                         <th>Rol</th>
-                                        <th>Estado</th>
-                                        <th>Último Acceso</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <c:forEach items="${usuarios}" var="usuario">
+                                    <c:forEach items="${bibliotecarios}" var="usuario">
                                         <tr>
                                             <td>${usuario.id}</td>
                                             <td>${usuario.nombre}</td>
                                             <td>${usuario.email}</td>
                                             <td>${usuario.rol}</td>
                                             <td>
-                                                <c:choose>
-                                                    <c:when test="${usuario.activo}">
-                                                        <span class="badge bg-success">Activo</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge bg-danger">Inactivo</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td>${usuario.ultimoAcceso}</td>
-                                            <td>
                                                 <div class="btn-group">
-                                                    <a href="${pageContext.request.contextPath}/admin/usuarios/editar?id=${usuario.id}" 
-                                                       class="btn btn-sm btn-warning" title="Editar">
+                                                    <a href="${pageContext.request.contextPath}/admin/usuarios/editar?id=${usuario.id}" class="btn btn-sm btn-primary">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
                                                     <button type="button" class="btn btn-sm btn-danger" 
-                                                            onclick="confirmarEliminacion(${usuario.id})" title="Eliminar">
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#eliminarModal"
+                                                            data-id="${usuario.id}"
+                                                            data-nombre="${usuario.nombre}"
+                                                            data-email="${usuario.email}"
+                                                            data-rol="${usuario.rol}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                    <c:forEach items="${lectores}" var="usuario">
+                                        <tr>
+                                            <td>${usuario.id}</td>
+                                            <td>${usuario.nombre}</td>
+                                            <td>${usuario.email}</td>
+                                            <td>${usuario.rol}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="${pageContext.request.contextPath}/admin/usuarios/editar?id=${usuario.id}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#eliminarModal"
+                                                            data-id="${usuario.id}"
+                                                            data-nombre="${usuario.nombre}"
+                                                            data-email="${usuario.email}"
+                                                            data-rol="${usuario.rol}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña Bibliotecarios -->
+                    <div class="tab-pane fade" id="bibliotecarios" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${bibliotecarios}" var="usuario">
+                                        <tr>
+                                            <td>${usuario.id}</td>
+                                            <td>${usuario.nombre}</td>
+                                            <td>${usuario.email}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="${pageContext.request.contextPath}/admin/usuarios/editar?id=${usuario.id}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#eliminarModal"
+                                                            data-id="${usuario.id}"
+                                                            data-nombre="${usuario.nombre}"
+                                                            data-email="${usuario.email}"
+                                                            data-rol="${usuario.rol}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pestaña Lectores -->
+                    <div class="tab-pane fade" id="lectores" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${lectores}" var="usuario">
+                                        <tr>
+                                            <td>${usuario.id}</td>
+                                            <td>${usuario.nombre}</td>
+                                            <td>${usuario.email}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="${pageContext.request.contextPath}/admin/usuarios/editar?id=${usuario.id}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#eliminarModal"
+                                                            data-id="${usuario.id}"
+                                                            data-nombre="${usuario.nombre}"
+                                                            data-email="${usuario.email}"
+                                                            data-rol="${usuario.rol}">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -177,22 +294,32 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación de eliminación -->
-    <div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1">
+    <!-- Modal de Eliminación -->
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    ¿Está seguro que desea eliminar este usuario?
+                    <p>¿Está seguro que desea eliminar al siguiente usuario?</p>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Información del Usuario</h6>
+                            <p class="card-text"><strong>ID:</strong> <span id="modal-usuario-id"></span></p>
+                            <p class="card-text"><strong>Nombre:</strong> <span id="modal-usuario-nombre"></span></p>
+                            <p class="card-text"><strong>Email:</strong> <span id="modal-usuario-email"></span></p>
+                            <p class="card-text"><strong>Rol:</strong> <span id="modal-usuario-rol"></span></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <a href="#" id="btnConfirmarEliminar" class="btn btn-danger">
-                        <i class="bi bi-trash me-2"></i>Eliminar
-                    </a>
+                    <form action="${pageContext.request.contextPath}/admin/usuarios/eliminar" method="post" style="display: inline;">
+                        <input type="hidden" name="id" id="modal-usuario-id-input">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -201,13 +328,25 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Función para confirmar eliminación
-        function confirmarEliminacion(id) {
-            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));
-            document.getElementById('btnConfirmarEliminar').href = 
-                '${pageContext.request.contextPath}/admin/usuarios/eliminar?id=' + id;
-            modal.show();
-        }
+        // Script para manejar el modal de eliminación
+        document.addEventListener('DOMContentLoaded', function() {
+            const eliminarModal = document.getElementById('eliminarModal');
+            if (eliminarModal) {
+                eliminarModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const nombre = button.getAttribute('data-nombre');
+                    const email = button.getAttribute('data-email');
+                    const rol = button.getAttribute('data-rol');
+
+                    document.getElementById('modal-usuario-id').textContent = id;
+                    document.getElementById('modal-usuario-nombre').textContent = nombre;
+                    document.getElementById('modal-usuario-email').textContent = email;
+                    document.getElementById('modal-usuario-rol').textContent = rol;
+                    document.getElementById('modal-usuario-id-input').value = id;
+                });
+            }
+        });
     </script>
 </body>
 </html>

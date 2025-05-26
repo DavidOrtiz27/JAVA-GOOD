@@ -20,7 +20,7 @@ public class UsuarioDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, email);
-            stmt.setString(2, password); // En una aplicación real, usar hash para la contraseña
+            stmt.setString(2, password);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -45,7 +45,7 @@ public class UsuarioDAO {
             
             stmt.setString(1, usuario.getNombre());
             stmt.setString(2, usuario.getEmail());
-            stmt.setString(3, usuario.getPassword()); // En una aplicación real, usar hash
+            stmt.setString(3, usuario.getPassword());
             stmt.setString(4, usuario.getRol());
             
             int filasAfectadas = stmt.executeUpdate();

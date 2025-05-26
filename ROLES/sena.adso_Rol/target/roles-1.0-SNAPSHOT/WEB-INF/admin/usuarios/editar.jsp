@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
-<html lang="es" class="h-100">
+<html lang="es">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -46,6 +46,18 @@
         .navbar {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .form-control:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+        }
+        .btn-primary {
+            background-color: #2c3e50;
+            border-color: #2c3e50;
+        }
+        .btn-primary:hover {
+            background-color: #34495e;
+            border-color: #34495e;
+        }
     </style>
 </head>
 
@@ -68,17 +80,16 @@
                         </li>
                         <li>
                             <a href="${pageContext.request.contextPath}/admin/libros" class="nav-link text-white">
-                            <a href="${pageContext.request.contextPath}/bibliotecario/libros/listar" class="nav-link text-white">
                                 <i class="bi bi-book"></i>Libros
                             </a>
                         </li>
                         <li>
-                            <a href="${pageContext.request.contextPath}/bibliotecario/prestamos/listar" class="nav-link text-white">
+                            <a href="${pageContext.request.contextPath}/admin/prestamos" class="nav-link text-white">
                                 <i class="bi bi-journal-text"></i>Préstamos
                             </a>
                         </li>
                         <li>
-                            <a href="${pageContext.request.contextPath}/bibliotecario/usuarios/listar" class="nav-link active">
+                            <a href="${pageContext.request.contextPath}/admin/usuarios" class="nav-link active">
                                 <i class="bi bi-people"></i>Usuarios
                             </a>
                         </li>
@@ -107,7 +118,7 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Editar Usuario</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <a href="${pageContext.request.contextPath}/bibliotecario/usuarios/listar" class="btn btn-secondary">
+                        <a href="${pageContext.request.contextPath}/admin/usuarios" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Volver
                         </a>
                     </div>
@@ -121,71 +132,46 @@
                     </div>
                 </c:if>
 
-                <!-- Formulario de edición -->
+                <!-- Formulario -->
                 <div class="card">
                     <div class="card-body">
-                        <form action="${pageContext.request.contextPath}/bibliotecario/usuarios/actualizar" method="post" class="needs-validation" novalidate>
+                        <form action="${pageContext.request.contextPath}/admin/usuarios/actualizar" method="post" class="needs-validation" novalidate>
                             <input type="hidden" name="id" value="${usuario.id}">
                             
-                            <div class="row mb-3">
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="nombre" class="form-label">Nombre Completo</label>
-                                    <input type="text" class="form-control" id="nombre" name="nombre" 
-                                           value="${usuario.nombre}" required>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" value="${usuario.nombre}" required>
                                     <div class="invalid-feedback">
                                         Por favor ingrese el nombre completo.
                                     </div>
                                 </div>
+
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">Correo Electrónico</label>
-                                    <input type="email" class="form-control" id="email" name="email" 
-                                           value="${usuario.email}" required>
+                                    <input type="email" class="form-control" id="email" name="email" value="${usuario.email}" required>
                                     <div class="invalid-feedback">
                                         Por favor ingrese un correo electrónico válido.
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="rol" class="form-label">Rol</label>
                                     <select class="form-select" id="rol" name="rol" required>
-                                        <option value="">Seleccione un rol</option>
-                                        <option value="Bibliotecario" ${usuario.rol == 'Bibliotecario' ? 'selected' : ''}>
-                                            Bibliotecario
-                                        </option>
-                                        <option value="Lector" ${usuario.rol == 'Lector' ? 'selected' : ''}>
-                                            Lector
-                                        </option>
+                                        <option value="">Seleccione un rol...</option>
+                                        <option value="Bibliotecario" ${usuario.rol == 'Bibliotecario' ? 'selected' : ''}>Bibliotecario</option>
+                                        <option value="Lector" ${usuario.rol == 'Lector' ? 'selected' : ''}>Lector</option>
                                     </select>
                                     <div class="invalid-feedback">
                                         Por favor seleccione un rol.
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="activo" class="form-label">Estado</label>
-                                    <select class="form-select" id="activo" name="activo" required>
-                                        <option value="true" ${usuario.activo ? 'selected' : ''}>Activo</option>
-                                        <option value="false" ${!usuario.activo ? 'selected' : ''}>Inactivo</option>
-                                    </select>
-                                    <div class="invalid-feedback">
-                                        Por favor seleccione un estado.
-                                    </div>
-                                </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="resetPassword" name="resetPassword">
-                                        <label class="form-check-label" for="resetPassword">
-                                            Generar nueva contraseña temporal
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                            <hr class="my-4">
 
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="${pageContext.request.contextPath}/admin/usuarios" class="btn btn-secondary">Cancelar</a>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-save me-2"></i>Guardar Cambios
                                 </button>
@@ -201,19 +187,20 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Validación del formulario
-        (function () {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    form.classList.add('was-validated')
-                }, false)
-            })
-        })()
+        (function() {
+            'use strict';
+            
+            const form = document.querySelector('.needs-validation');
+            
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        })();
     </script>
 </body>
 </html> 

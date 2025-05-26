@@ -8,7 +8,6 @@ sena/adso/roles/controlador/PrestamoServlet.class
 sena/adso/roles/controlador/BibliotecarioPanelServlet.class
 sena/adso/roles/dao/PrestamoDAO.class
 sena/adso/roles/util/ConexionBD.class
-sena/adso/roles/controlador/usuarioResgistradoServlet.class
 sena/adso/roles/filtro/AuthenticationFilter.class
 sena/adso/roles/dao/LibroDAO.class
 sena/adso/roles/controlador/editarServlet.class
@@ -21,9 +20,9 @@ sena/adso/roles/controlador/CambiarPasswordServlet.class
 sena/adso/roles/modelo/Prestamo.class
 sena/adso/roles/util/EmailUtil.class
 sena/adso/roles/controlador/CatalogoServlet.class
+sena/adso/roles/modelo/RolUsuario.class
 sena/adso/roles/modelo/Usuario.class
 sena/adso/roles/modelo/Libro.class
-sena/adso/roles/modelo/RolUsuario.class
 sena/adso/roles/modelo/EstadoPrestamo.class
 sena/adso/roles/controlador/editarServlet$1.class
 sena/adso/roles/controlador/RegistroServlet.class

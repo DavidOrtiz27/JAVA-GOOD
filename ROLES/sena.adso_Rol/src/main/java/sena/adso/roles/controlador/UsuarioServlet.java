@@ -3,6 +3,7 @@ package sena.adso.roles.controlador;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -81,8 +82,24 @@ public class UsuarioServlet extends HttpServlet {
     
     private void listarUsuarios(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
-        List<Usuario> usuarios = usuarioDAO.listarUsuarios();
-        request.setAttribute("usuarios", usuarios);
+        List<Usuario> todosUsuarios = usuarioDAO.listarUsuarios();
+        
+        // Agrupar usuarios por rol
+        List<Usuario> bibliotecarios = todosUsuarios.stream()
+            .filter(u -> "bibliotecario".equalsIgnoreCase(u.getRol()))
+            .collect(Collectors.toList());
+            
+        List<Usuario> lectores = todosUsuarios.stream()
+            .filter(u -> "lector".equalsIgnoreCase(u.getRol()))
+            .collect(Collectors.toList());
+            
+        List<Usuario> administradores = todosUsuarios.stream()
+            .filter(u -> "admin".equalsIgnoreCase(u.getRol()))
+            .collect(Collectors.toList());
+        
+        request.setAttribute("bibliotecarios", bibliotecarios);
+        request.setAttribute("lectores", lectores);
+        request.setAttribute("administradores", administradores);
         request.getRequestDispatcher("/WEB-INF/admin/usuarios/listar.jsp").forward(request, response);
     }
 
@@ -158,12 +175,26 @@ public class UsuarioServlet extends HttpServlet {
     private void eliminarUsuario(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
         int id = Integer.parseInt(request.getParameter("id"));
-        boolean resultado = usuarioDAO.eliminarUsuario(id);
         
+        // Verificar que el usuario no sea el último administrador
+        Usuario usuarioAEliminar = usuarioDAO.buscarPorId(id);
+        if (usuarioAEliminar != null && "admin".equalsIgnoreCase(usuarioAEliminar.getRol())) {
+            List<Usuario> administradores = usuarioDAO.buscarPorRol("admin");
+            if (administradores.size() <= 1) {
+                request.setAttribute("mensaje", "No se puede eliminar el último administrador del sistema");
+                request.setAttribute("tipo", "danger");
+                response.sendRedirect(request.getContextPath() + "/admin/usuarios/listar");
+                return;
+            }
+        }
+        
+        boolean resultado = usuarioDAO.eliminarUsuario(id);
         if (resultado) {
-            setMensajeExito(request, "Usuario eliminado correctamente");
+            request.setAttribute("mensaje", "Usuario eliminado correctamente");
+            request.setAttribute("tipo", "success");
         } else {
-            setMensajeError(request, "Error al eliminar el usuario");
+            request.setAttribute("mensaje", "Error al eliminar el usuario");
+            request.setAttribute("tipo", "danger");
         }
         response.sendRedirect(request.getContextPath() + "/admin/usuarios/listar");
     }

@@ -89,7 +89,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="${pageContext.request.contextPath}/admin/usuarios" class="nav-link text-white">
+                            <a href="${pageContext.request.contextPath}/admin/usuarios/listar" class="nav-link text-white">
                                 <i class="bi bi-people"></i>Usuarios
                             </a>
                         </li>
@@ -113,6 +113,8 @@
                 </div>
             </div>
 
+            <!-- Contenido Principal -->
+            <main class="col-md-9 col-lg-10 px-md-4 py-4">
                 <!-- Tarjetas de estadísticas -->
                 <div class="row g-4 mb-4">
                     <div class="col-md-3">

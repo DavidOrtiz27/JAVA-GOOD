@@ -254,6 +254,15 @@ public class LibroServlet extends HttpServlet {
 		System.out.println("Tipo de libro: " + tipo);
 
 		try {
+			// Validar longitud del ISBN
+			String isbn = request.getParameter("isbn");
+			if (isbn != null && isbn.length() > 13) {
+				request.getSession().setAttribute("mensaje", "El ISBN no puede tener más de 13 caracteres");
+				request.getSession().setAttribute("tipo", "danger");
+				request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
+				return;
+			}
+
 			Libro libro = crearLibroDesdeRequest(request, tipo);
 			System.out.println("Libro creado: " + libro.getTitulo());
 			
@@ -273,10 +282,16 @@ public class LibroServlet extends HttpServlet {
 				request.getSession().setAttribute("tipo", "danger");
 				request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			System.err.println("Error al guardar libro: " + e.getMessage());
 			e.printStackTrace();
-			request.getSession().setAttribute("mensaje", "Error al guardar el libro");
+			request.getSession().setAttribute("mensaje", "Error al guardar el libro: " + e.getMessage());
+			request.getSession().setAttribute("tipo", "danger");
+			request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
+		} catch (Exception e) {
+			System.err.println("Error inesperado: " + e.getMessage());
+			e.printStackTrace();
+			request.getSession().setAttribute("mensaje", "Error inesperado al guardar el libro");
 			request.getSession().setAttribute("tipo", "danger");
 			request.getRequestDispatcher("/WEB-INF/admin/libros/nuevo.jsp").forward(request, response);
 		}
@@ -360,7 +375,7 @@ public class LibroServlet extends HttpServlet {
 		}
 	}
 
-	private void eliminarLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+	private void eliminarLibro(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
 		System.out.println("Eliminando libro...");
 		try {
 			int id = Integer.parseInt(request.getParameter("id"));
@@ -374,17 +389,17 @@ public class LibroServlet extends HttpServlet {
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
-
-			// Verificar si tiene préstamos activos
-			if (libroDAO.tienePrestamosActivos(id)) {
-				request.getSession().setAttribute("mensaje", "No se puede eliminar el libro porque tiene préstamos activos. Por favor, asegúrese de que todos los préstamos estén devueltos antes de eliminar el libro.");
+			
+			// Verificar si el libro tiene préstamos
+			if (libroDAO.tienePrestamos(id)) {
+				request.getSession().setAttribute("mensaje", "No se puede eliminar el libro porque tiene préstamos asociados. Primero debe devolver todos los préstamos.");
 				request.getSession().setAttribute("tipo", "warning");
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
 			
-			// Intentar eliminar el libro
-			if (libroDAO.eliminar(id)) {
+			boolean resultado = libroDAO.eliminar(id);
+			if (resultado) {
 				request.getSession().setAttribute("mensaje", "Libro eliminado correctamente");
 				request.getSession().setAttribute("tipo", "success");
 			} else {

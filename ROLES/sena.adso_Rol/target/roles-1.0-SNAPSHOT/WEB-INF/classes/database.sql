@@ -3,7 +3,8 @@ CREATE TABLE usuarios (
     nombre VARCHAR(100),
     email VARCHAR(100),
     password VARCHAR(255),
-    rol VARCHAR(20)
+    rol VARCHAR(20),
+    activo BOOLEAN DEFAULT true
 );
 
 CREATE TABLE libros (

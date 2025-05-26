@@ -50,6 +50,26 @@ public class PrestamoServlet extends HttpServlet {
         }
         
         String accion = request.getParameter("accion");
+        String pathInfo = request.getPathInfo();
+        
+        // Si la ruta es /nuevo, mostrar el formulario de nuevo préstamo
+        if (pathInfo != null && pathInfo.equals("/nuevo")) {
+            if (usuario.esBibliotecario()) {
+                try {
+                    mostrarFormularioPrestamo(request, response);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    request.setAttribute("mensaje", "Error al cargar el formulario: " + e.getMessage());
+                    request.setAttribute("tipo", "danger");
+                    response.sendRedirect(request.getContextPath() + "/admin/prestamos");
+                }
+                return;
+            } else {
+                response.sendRedirect(request.getContextPath() + "/lector/panel");
+                return;
+            }
+        }
+        
         if (accion == null) accion = "listar";
         
         try {
@@ -86,18 +106,6 @@ public class PrestamoServlet extends HttpServlet {
                         } else {
                             response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
                         }
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/lector/panel");
-                    }
-                    break;
-                    
-                case "formulario":
-                    if (usuario.esBibliotecario()) {
-                        List<Libro> libros = libroDAO.listarDisponibles();
-                        List<Usuario> usuarios = usuarioDAO.buscarPorRol("lector");
-                        request.setAttribute("libros", libros);
-                        request.setAttribute("usuarios", usuarios);
-                        request.getRequestDispatcher("/WEB-INF/admin/prestamos/nuevo.jsp").forward(request, response);
                     } else {
                         response.sendRedirect(request.getContextPath() + "/lector/panel");
                     }
@@ -201,9 +209,9 @@ public class PrestamoServlet extends HttpServlet {
             throws ServletException, IOException, SQLException {
         try {
             System.out.println("PrestamoServlet.mostrarFormularioPrestamo - Iniciando");
-            List<Libro> librosDisponibles = libroDAO.listarDisponibles();
-            System.out.println("Libros disponibles encontrados: " + librosDisponibles.size());
-            for (Libro libro : librosDisponibles) {
+            List<Libro> libros = libroDAO.listarDisponibles();
+            System.out.println("Libros disponibles encontrados: " + libros.size());
+            for (Libro libro : libros) {
                 System.out.println("- Libro: " + libro.getId() + " - " + libro.getTitulo());
             }
             
@@ -213,7 +221,7 @@ public class PrestamoServlet extends HttpServlet {
                 System.out.println("- Usuario: " + usuario.getId() + " - " + usuario.getNombre());
             }
             
-            request.setAttribute("librosDisponibles", librosDisponibles);
+            request.setAttribute("libros", libros);
             request.setAttribute("usuarios", usuarios);
             System.out.println("Atributos establecidos en la request");
             request.getRequestDispatcher("/WEB-INF/admin/prestamos/nuevo.jsp").forward(request, response);

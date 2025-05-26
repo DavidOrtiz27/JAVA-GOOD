@@ -252,31 +252,41 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Función para mostrar/ocultar campos específicos según el tipo de libro
         function mostrarCamposEspecificos() {
             const tipo = document.getElementById('tipo').value;
             
-            // Ocultar todos los campos específicos
+            // Ocultar todos los campos específicos primero
             document.getElementById('camposFiccion').style.display = 'none';
             document.getElementById('camposNoFiccion').style.display = 'none';
             document.getElementById('camposReferencia').style.display = 'none';
             
-            // Mostrar los campos correspondientes al tipo seleccionado
+            // Desactivar todos los campos específicos
+            document.getElementById('genero').required = false;
+            document.getElementById('premiosLiterarios').required = false;
+            document.getElementById('areaTematica').required = false;
+            document.getElementById('publicoObjetivo').required = false;
+            document.getElementById('campoAcademico').required = false;
+            
+            // Mostrar y activar los campos correspondientes al tipo seleccionado
             if (tipo === 'Ficcion') {
                 document.getElementById('camposFiccion').style.display = 'block';
+                document.getElementById('genero').required = true;
             } else if (tipo === 'NoFiccion') {
                 document.getElementById('camposNoFiccion').style.display = 'block';
+                document.getElementById('areaTematica').required = true;
+                document.getElementById('publicoObjetivo').required = true;
             } else if (tipo === 'Referencia') {
                 document.getElementById('camposReferencia').style.display = 'block';
+                document.getElementById('campoAcademico').required = true;
             }
         }
 
         // Validación del formulario
         (function () {
             'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
+            const forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
                     if (!form.checkValidity()) {
                         event.preventDefault()
                         event.stopPropagation()
@@ -285,6 +295,11 @@
                 }, false)
             })
         })()
+
+        // Ejecutar al cargar la página para establecer el estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            mostrarCamposEspecificos();
+        });
     </script>
 </body>
 </html>

@@ -101,7 +101,14 @@
                                     <h6 class="card-subtitle mb-2 text-muted">${libro.autor}</h6>
                                     <p class="card-text">
                                         <small class="text-muted">
-                                            Género: ${libro.genero}<br>
+                                            <c:choose>
+                                                <c:when test="${libro.tipoLibro == 'Ficcion'}">
+                                                    Género: ${libro.genero}<br>
+                                                </c:when>
+                                                <c:when test="${libro.tipoLibro == 'Referencia'}">
+                                                    Campo Académico: ${libro.campoAcademico}<br>
+                                                </c:when>
+                                            </c:choose>
                                             Disponibles: ${libro.ejemplaresDisponibles}
                                         </small>
                                     </p>

@@ -116,7 +116,7 @@
                 <!-- Formulario -->
                 <div class="card">
                     <div class="card-body">
-                        <form action="${pageContext.request.contextPath}/admin/prestamos/crear" method="post" class="needs-validation" novalidate>
+                        <form action="${pageContext.request.contextPath}/admin/prestamos" method="post" class="needs-validation" novalidate>
                             <input type="hidden" name="accion" value="crear">
                             
                             <div class="row mb-3">
@@ -124,7 +124,7 @@
                                     <label for="libro_id" class="form-label">Libro *</label>
                                     <select class="form-select" id="libro_id" name="libro_id" required>
                                         <option value="">Seleccione un libro</option>
-                                        <c:forEach items="${librosDisponibles}" var="libro">
+                                        <c:forEach items="${libros}" var="libro">
                                             <option value="${libro.id}">${libro.titulo} - ${libro.autor}</option>
                                         </c:forEach>
                                     </select>

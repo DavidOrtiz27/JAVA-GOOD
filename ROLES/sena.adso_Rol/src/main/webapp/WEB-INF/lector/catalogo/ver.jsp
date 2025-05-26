@@ -124,15 +124,34 @@
                                 <h5 class="card-subtitle text-muted mb-4">${libro.autor}</h5>
                                 
                                 <div class="mb-4">
-                                    <h6 class="fw-bold">Género</h6>
-                                    <p class="card-text">${libro.genero}</p>
+                                    <c:choose>
+                                        <c:when test="${libro.tipoLibro == 'Ficcion'}">
+                                            <h6 class="fw-bold">Género</h6>
+                                            <p class="card-text">${libro.genero}</p>
+                                        </c:when>
+                                        <c:when test="${libro.tipoLibro == 'Referencia'}">
+                                             <h6 class="fw-bold">Campo Académico</h6>
+                                            <p class="card-text">${libro.campoAcademico}</p>
+                                        </c:when>
+                                    </c:choose>
                                 </div>
 
                                 <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <h6 class="fw-bold">Premios Literarios</h6>
-                                        <p class="card-text">${libro.premiosLiterarios}</p>
-                                    </div>
+                                    <c:choose>
+                                        <c:when test="${libro.tipoLibro == 'Ficcion'}">
+                                            <div class="col-md-6">
+                                                <h6 class="fw-bold">Premios Literarios</h6>
+                                                <p class="card-text">${libro.premiosLiterarios}</p>
+                                            </div>
+                                        </c:when>
+                                        <c:when test="${libro.tipoLibro == 'Referencia'}">
+                                            <div class="col-md-6">
+                                                 <h6 class="fw-bold">Consulta Interna</h6>
+                                                <p class="card-text">${libro.consultaInterna ? 'Sí' : 'No'}</p>
+                                            </div>
+                                        </c:when>
+                                    </c:choose>
+                                    
                                     <div class="col-md-6">
                                         <h6 class="fw-bold">ISBN</h6>
                                         <p class="card-text">${libro.isbn}</p>

@@ -345,7 +345,7 @@
                     document.getElementById('modal-usuario-rol').textContent = rol;
                     document.getElementById('modal-usuario-id-input').value = id;
                 });
-            }
+        }
         });
     </script>
 </body>

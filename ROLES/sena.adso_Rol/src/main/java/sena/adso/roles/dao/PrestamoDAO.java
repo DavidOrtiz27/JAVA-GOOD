@@ -41,7 +41,7 @@ public class PrestamoDAO {
                     "FROM prestamos p " +
                     "JOIN libros l ON p.libro_id = l.id " +
                     "JOIN usuarios u ON p.usuario_id = u.id " +
-                    "WHERE p.usuario_id = ? AND p.estado = 'ACTIVO' " +
+                    "WHERE p.usuario_id = ? " +
                     "ORDER BY p.fecha_prestamo DESC";
         
         try (Connection conn = ConexionBD.getConnection();

@@ -1,6 +1,7 @@
 package sena.adso.roles.controlador;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -11,7 +12,7 @@ import sena.adso.roles.dao.UsuarioDAO;
 import sena.adso.roles.modelo.Usuario;
 import sena.adso.roles.util.EmailUtil;
 
-@WebServlet("/recuperar-password")
+@WebServlet("/auth/recuperar-password")
 public class RecuperarPasswordServlet extends HttpServlet {
     
     private UsuarioDAO usuarioDAO;
@@ -24,7 +25,7 @@ public class RecuperarPasswordServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/recuperar-password.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/auth/recuperar-password.jsp").forward(request, response);
     }
 
     @Override
@@ -38,7 +39,7 @@ public class RecuperarPasswordServlet extends HttpServlet {
             mensaje = "Por favor, ingrese su correo electrónico";
             request.setAttribute("mensaje", mensaje);
             request.setAttribute("tipo", "danger");
-            request.getRequestDispatcher("/recuperar-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/auth/recuperar-password.jsp").forward(request, response);
             return;
         }
 
@@ -82,6 +83,6 @@ public class RecuperarPasswordServlet extends HttpServlet {
         }
 
         request.setAttribute("mensaje", mensaje);
-        request.getRequestDispatcher("/recuperar-password.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/auth/recuperar-password.jsp").forward(request, response);
     }
 }

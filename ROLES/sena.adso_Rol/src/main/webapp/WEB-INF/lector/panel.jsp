@@ -2,16 +2,55 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <!DOCTYPE html>
-<html lang="es" class="h-100">
+<html lang="es">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Panel de Lector - Biblioteca Duitama</title>
+    <title>Panel Lector - Biblioteca Duitama</title>
 
     <!-- Estilos Bootstrap e íconos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
-    <link href="${pageContext.request.contextPath}/WEB-INF/css/styles.css" rel="stylesheet"/>
+    
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: #2c3e50;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,.8);
+            padding: 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,.1);
+        }
+        .sidebar .nav-link.active {
+            background: #34495e;
+            color: white;
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            background: #f8f9fa;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 
 <body>
@@ -32,13 +71,18 @@
                             </a>
                         </li>
                         <li>
-                            <a href="${pageContext.request.contextPath}/lector/catalogo" class="nav-link text-white">
+                            <a href="${pageContext.request.contextPath}/lector/catalogo/listar" class="nav-link text-white">
                                 <i class="bi bi-book"></i>Catálogo
                             </a>
                         </li>
                         <li>
-                            <a href="${pageContext.request.contextPath}/lector/prestamos" class="nav-link text-white">
+                            <a href="${pageContext.request.contextPath}/lector/prestamos/historial" class="nav-link text-white">
                                 <i class="bi bi-journal-text"></i>Mis Préstamos
+                            </a>
+                        </li>
+                        <li>
+                            <a href="${pageContext.request.contextPath}/cambiar-password" class="nav-link text-white">
+                                <i class="bi bi-key"></i>Cambiar Contraseña
                             </a>
                         </li>
                     </ul>
@@ -64,104 +108,90 @@
             <!-- Contenido principal -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Panel de Lector</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <a href="${pageContext.request.contextPath}/lector/catalogo" class="btn btn-primary">
-                            <i class="bi bi-search me-2"></i>Explorar Catálogo
-                        </a>
-                    </div>
+                    <h1 class="h2">Bienvenido, ${sessionScope.usuario.nombre}</h1>
                 </div>
 
-                <!-- Tarjetas de resumen -->
-                <div class="row g-4 mb-4">
+                <!-- Mensajes -->
+                <c:if test="${not empty mensaje}">
+                    <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                        ${mensaje}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </c:if>
+
+                <!-- Tarjetas de Acceso Rápido -->
+                <div class="row g-4 py-3">
+                    <!-- Catálogo -->
                     <div class="col-md-6">
                         <div class="card h-100">
-                            <div class="card-body text-center">
-                                <i class="bi bi-book text-primary card-icon"></i>
-                                <h5 class="card-title">Préstamos Activos</h5>
-                                <p class="card-text display-6">${prestamosActivos}</p>
-                                <a href="${pageContext.request.contextPath}/lector/prestamos" class="btn btn-outline-primary">
-                                    Ver Detalles
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-body text-center">
-                                <i class="bi bi-clock-history text-success card-icon"></i>
-                                <h5 class="card-title">Historial de Préstamos</h5>
-                                <p class="card-text display-6">${totalPrestamos}</p>
-                                <a href="${pageContext.request.contextPath}/lector/prestamos/historial" class="btn btn-outline-success">
-                                    Ver Historial
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Préstamos activos -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-bookmark-check me-2"></i>Mis Préstamos Activos
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Libro</th>
-                                        <th>Fecha Préstamo</th>
-                                        <th>Fecha Devolución</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${prestamosActivos}" var="prestamo">
-                                        <tr>
-                                            <td>${prestamo.libro.titulo}</td>
-                                            <td>${prestamo.fechaPrestamo}</td>
-                                            <td>${prestamo.fechaDevolucion}</td>
-                                            <td>
-                                                <span class="badge bg-success">Activo</span>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Libros recomendados -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-stars me-2"></i>Libros Recomendados
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row row-cols-1 row-cols-md-3 g-4">
-                            <c:forEach items="${librosRecomendados}" var="libro">
-                                <div class="col">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h5 class="card-title">${libro.titulo}</h5>
-                                            <p class="card-text">${libro.autor}</p>
-                                            <p class="card-text">
-                                                <small class="text-muted">${libro.categoria}</small>
-                                            </p>
-                                        </div>
-                                        <div class="card-footer bg-transparent border-0">
-                                            <a href="${pageContext.request.contextPath}/lector/catalogo/ver?id=${libro.id}" 
-                                               class="btn btn-outline-primary btn-sm">
-                                                Ver Detalles
-                                            </a>
-                                        </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-book fs-1 text-primary me-3"></i>
+                                    <div>
+                                        <h5 class="card-title mb-1">Catálogo de Libros</h5>
+                                        <p class="card-text text-muted">Explora nuestra colección de libros</p>
                                     </div>
                                 </div>
+                                <div class="d-flex gap-2">
+                                    <a href="${pageContext.request.contextPath}/lector/catalogo/listar" class="btn btn-primary">
+                                        Ver Catálogo
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/lector/catalogo/buscar" class="btn btn-outline-primary">
+                                        Buscar Libros
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mis Préstamos -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-journal-text fs-1 text-success me-3"></i>
+                                    <div>
+                                        <h5 class="card-title mb-1">Mis Préstamos</h5>
+                                        <p class="card-text text-muted">Gestiona tus préstamos activos y revisa tu historial</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="${pageContext.request.contextPath}/lector/prestamos/historial" class="btn btn-success">
+                                        Ver Préstamos
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/lector/prestamos/historial?tab=activos" class="btn btn-outline-success">
+                                        Préstamos Activos
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Libros Recientes -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h3 class="mb-3">Libros Disponibles</h3>
+                        <div class="row row-cols-1 row-cols-md-3 g-4">
+                            <c:forEach items="${libros}" var="libro" varStatus="status">
+                                <c:if test="${status.index < 6}">
+                                    <div class="col">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">${libro.titulo}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">${libro.autor}</h6>
+                                                <p class="card-text">
+                                                    <small class="text-muted">
+                                                        Disponibles: ${libro.ejemplaresDisponibles}
+                                                    </small>
+                                                </p>
+                                                <a href="${pageContext.request.contextPath}/lector/catalogo/ver?id=${libro.id}" class="btn btn-outline-primary btn-sm">
+                                                    Ver Detalles
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:if>
                             </c:forEach>
                         </div>
                     </div>

@@ -152,8 +152,8 @@
                                     <input type="email" class="form-control" id="email" name="email" value="${usuario.email}" required>
                                     <div class="invalid-feedback">
                                         Por favor ingrese un correo electrónico válido.
-                                    </div>
                                 </div>
+                            </div>
 
                                 <div class="col-md-6">
                                     <label for="rol" class="form-label">Rol</label>
@@ -193,10 +193,10 @@
             const form = document.querySelector('.needs-validation');
             
             form.addEventListener('submit', function(event) {
-                if (!form.checkValidity()) {
+                    if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
-                }
+                    }
                 
                 form.classList.add('was-validated');
             }, false);

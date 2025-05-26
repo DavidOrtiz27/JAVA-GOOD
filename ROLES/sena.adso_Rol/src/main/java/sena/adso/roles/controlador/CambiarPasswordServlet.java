@@ -49,8 +49,8 @@ public class CambiarPasswordServlet extends HttpServlet {
         
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         String passwordActual = request.getParameter("passwordActual");
-        String passwordNuevo = request.getParameter("passwordNuevo");
-        String passwordConfirmar = request.getParameter("passwordConfirmar");
+        String passwordNuevo = request.getParameter("nuevaPassword");
+        String passwordConfirmar = request.getParameter("confirmarPassword");
         
         try {
             // Validar campos obligatorios
@@ -90,7 +90,7 @@ public class CambiarPasswordServlet extends HttpServlet {
                 session.setAttribute("usuario", usuario);
                 
                 // Redirigir según el rol
-                String destino = usuario.esBibliotecario() ? "/admin/panel" : "/lector/dashboard";
+                String destino = usuario.esBibliotecario() ? "/admin/panel" : "/lector/panel";
                 setMensajeExito(request, "Contraseña actualizada exitosamente");
                 response.sendRedirect(request.getContextPath() + destino);
                 return;

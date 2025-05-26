@@ -389,7 +389,7 @@ public class LibroServlet extends HttpServlet {
 				response.sendRedirect(request.getContextPath() + "/admin/libros/listar");
 				return;
 			}
-			
+
 			// Verificar si el libro tiene préstamos
 			if (libroDAO.tienePrestamos(id)) {
 				request.getSession().setAttribute("mensaje", "No se puede eliminar el libro porque tiene préstamos asociados. Primero debe devolver todos los préstamos.");

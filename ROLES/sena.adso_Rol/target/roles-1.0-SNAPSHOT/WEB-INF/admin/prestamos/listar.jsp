@@ -442,7 +442,8 @@
         function confirmarDevolucion(id) {
             console.log("ID del préstamo:", id);
             if (id && id !== '') {
-                window.location.href = '${pageContext.request.contextPath}/admin/prestamos/devolver?id=' + id;
+                // Redirigir directamente a la página de devolución
+                window.location.href = '/roles_war_exploded/admin/prestamos?accion=devolver&id=' + id;
             } else {
                 alert("Error: No se pudo obtener el ID del préstamo");
             }

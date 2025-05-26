@@ -20,7 +20,10 @@ import sena.adso.roles.modelo.Libro;
 import sena.adso.roles.modelo.Prestamo;
 import sena.adso.roles.modelo.Usuario;
 
-@WebServlet(name = "PrestamoServlet", urlPatterns = {"/admin/prestamos/*", "/lector/prestamos/*"})
+@WebServlet(name = "PrestamoServlet", urlPatterns = {
+    "/lector/prestamos/*",
+    "/admin/prestamos/*"
+})
 public class PrestamoServlet extends HttpServlet {
     
     private PrestamoDAO prestamoDAO;
@@ -38,40 +41,77 @@ public class PrestamoServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String accion = extraerAccion(request);
-        System.out.println("PrestamoServlet.doGet - Acción solicitada: " + accion);
+        HttpSession session = request.getSession();
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        
+        if (usuario == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login");
+            return;
+        }
+        
+        String accion = request.getParameter("accion");
+        if (accion == null) accion = "listar";
         
         try {
             switch (accion) {
                 case "listar":
                     listarPrestamos(request, response);
                     break;
-                case "nuevo":
-                    if (esBibliotecario(request)) {
-                        mostrarFormularioPrestamo(request, response);
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/acceso-denegado.jsp");
-                    }
-                    break;
-                case "devolver":
-                    if (esBibliotecario(request)) {
-                        mostrarFormularioDevolucion(request, response);
-                    } else {
-                        response.sendRedirect(request.getContextPath() + "/acceso-denegado.jsp");
-                    }
-                    break;
+                    
                 case "historial":
-                    verHistorial(request, response);
-                    break;
-                default:
-                    if (accion == null || accion.isEmpty()) {
-                        listarPrestamos(request, response);
+                    if (usuario.esBibliotecario()) {
+                        // Para bibliotecarios: mostrar historial completo
+                        List<Prestamo> historial = prestamoDAO.listarTodos().stream()
+                            .filter(p -> "DEVUELTO".equals(p.getEstado()))
+                            .collect(Collectors.toList());
+                        request.setAttribute("prestamos", historial);
+                        request.setAttribute("now", new java.sql.Date(System.currentTimeMillis()));
+                        request.getRequestDispatcher("/WEB-INF/admin/prestamos/historial.jsp").forward(request, response);
                     } else {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                        // Para lectores: mostrar su historial personal
+                        List<Prestamo> historial = prestamoDAO.listarPorUsuario(usuario.getId()).stream()
+                            .filter(p -> "DEVUELTO".equals(p.getEstado()))
+                            .collect(Collectors.toList());
+                        request.setAttribute("prestamos", historial);
+                        request.setAttribute("now", new java.sql.Date(System.currentTimeMillis()));
+                        request.getRequestDispatcher("/WEB-INF/lector/prestamos/historial.jsp").forward(request, response);
                     }
+                    break;
+                    
+                case "devolver":
+                    if (usuario.esBibliotecario()) {
+                        String idParam = request.getParameter("id");
+                        if (idParam != null && !idParam.trim().isEmpty()) {
+                            mostrarFormularioDevolucion(request, response);
+                        } else {
+                            response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
+                        }
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/lector/panel");
+                    }
+                    break;
+                    
+                case "formulario":
+                    if (usuario.esBibliotecario()) {
+                        List<Libro> libros = libroDAO.listarDisponibles();
+                        List<Usuario> usuarios = usuarioDAO.buscarPorRol("lector");
+                        request.setAttribute("libros", libros);
+                        request.setAttribute("usuarios", usuarios);
+                        request.getRequestDispatcher("/WEB-INF/admin/prestamos/nuevo.jsp").forward(request, response);
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/lector/panel");
+                    }
+                    break;
+                    
+                default:
+                    response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
+                    break;
             }
         } catch (SQLException e) {
-            manejarError(request, response, e);
+            e.printStackTrace();
+            request.setAttribute("mensaje", "Error al procesar la solicitud: " + e.getMessage());
+            request.setAttribute("tipo", "danger");
+            response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
         }
     }
     
@@ -83,7 +123,8 @@ public class PrestamoServlet extends HttpServlet {
             return;
         }
         
-        String accion = extraerAccion(request);
+        String accion = request.getParameter("accion");
+        System.out.println("PrestamoServlet.doPost - Acción: " + accion);
         
         try {
             switch (accion) {
@@ -121,33 +162,38 @@ public class PrestamoServlet extends HttpServlet {
     private void listarPrestamos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
         Usuario usuario = (Usuario) request.getSession().getAttribute("usuario");
-        List<Prestamo> prestamos;
         
         if (esBibliotecario(request)) {
-            // Obtener préstamos activos
-            List<Prestamo> prestamosActivos = prestamoDAO.listarTodos().stream()
+            // Obtener todos los préstamos
+            List<Prestamo> todosPrestamos = prestamoDAO.listarTodos();
+            
+            // Filtrar préstamos activos
+            List<Prestamo> prestamosActivos = todosPrestamos.stream()
                 .filter(p -> "ACTIVO".equals(p.getEstado()))
                 .collect(Collectors.toList());
             
-            // Obtener préstamos vencidos (activos con fecha de devolución pasada)
+            // Filtrar préstamos vencidos (activos con fecha de devolución pasada)
             List<Prestamo> prestamosVencidos = prestamosActivos.stream()
                 .filter(p -> p.getFechaDevolucion().before(new java.sql.Date(System.currentTimeMillis())))
                 .collect(Collectors.toList());
             
-            // Obtener historial (préstamos devueltos)
-            List<Prestamo> historial = prestamoDAO.listarTodos().stream()
+            // Filtrar historial (préstamos devueltos)
+            List<Prestamo> historial = todosPrestamos.stream()
                 .filter(p -> "DEVUELTO".equals(p.getEstado()))
                 .collect(Collectors.toList());
             
             request.setAttribute("prestamosActivos", prestamosActivos);
             request.setAttribute("prestamosVencidos", prestamosVencidos);
             request.setAttribute("historial", historial);
+            request.setAttribute("now", new java.sql.Date(System.currentTimeMillis()));
             
             request.getRequestDispatcher("/WEB-INF/admin/prestamos/listar.jsp").forward(request, response);
         } else {
-            prestamos = prestamoDAO.listarPorUsuario(usuario.getId());
+            // Para lectores: mostrar sus préstamos
+            List<Prestamo> prestamos = prestamoDAO.listarPorUsuario(usuario.getId());
             request.setAttribute("prestamos", prestamos);
-            request.getRequestDispatcher("/WEB-INF/lector/mis-prestamos.jsp").forward(request, response);
+            request.setAttribute("now", new java.sql.Date(System.currentTimeMillis()));
+            request.getRequestDispatcher("/WEB-INF/lector/prestamos/historial.jsp").forward(request, response);
         }
     }
     
@@ -252,18 +298,18 @@ public class PrestamoServlet extends HttpServlet {
             throws ServletException, IOException, SQLException {
         try {
             String idParam = request.getParameter("id");
+            System.out.println("PrestamoServlet.mostrarFormularioDevolucion - ID del préstamo: " + idParam);
+            
             if (idParam == null || idParam.trim().isEmpty()) {
                 request.getSession().setAttribute("mensaje", "ID de préstamo no proporcionado");
                 request.getSession().setAttribute("tipo", "danger");
-                response.sendRedirect(request.getContextPath() + "/admin/prestamos/listar");
+                response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
                 return;
             }
 
             int prestamoId = Integer.parseInt(idParam);
-            System.out.println("PrestamoServlet.mostrarFormularioDevolucion - ID del préstamo: " + prestamoId);
-            
             Prestamo prestamo = prestamoDAO.buscarPorId(prestamoId);
-            System.out.println("Prestamo encontrado: " + (prestamo != null ? "Sí" : "No"));
+            System.out.println("Préstamo encontrado: " + (prestamo != null ? "Sí" : "No"));
             
             if (prestamo != null && "ACTIVO".equals(prestamo.getEstado())) {
                 // Cargar datos adicionales del préstamo
@@ -282,21 +328,25 @@ public class PrestamoServlet extends HttpServlet {
             } else {
                 request.getSession().setAttribute("mensaje", "Préstamo no encontrado o ya devuelto");
                 request.getSession().setAttribute("tipo", "warning");
-                response.sendRedirect(request.getContextPath() + "/admin/prestamos/listar");
+                response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
             }
         } catch (NumberFormatException e) {
             System.err.println("Error en mostrarFormularioDevolucion: " + e.getMessage());
             request.getSession().setAttribute("mensaje", "ID de préstamo inválido");
             request.getSession().setAttribute("tipo", "danger");
-            response.sendRedirect(request.getContextPath() + "/admin/prestamos/listar");
+            response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
         }
     }
     
     private void procesarDevolucion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
         try {
+            System.out.println("PrestamoServlet.procesarDevolucion - Iniciando");
             int prestamoId = Integer.parseInt(request.getParameter("id"));
+            System.out.println("ID del préstamo a devolver: " + prestamoId);
+            
             Prestamo prestamo = prestamoDAO.buscarPorId(prestamoId);
+            System.out.println("Préstamo encontrado: " + (prestamo != null ? "Sí" : "No"));
             
             if (prestamo != null && "ACTIVO".equals(prestamo.getEstado())) {
                 // Establecer la fecha de devolución actual
@@ -304,54 +354,52 @@ public class PrestamoServlet extends HttpServlet {
                 prestamo.setEstado("DEVUELTO");
                 
                 boolean resultado = prestamoDAO.actualizar(prestamo);
+                System.out.println("Resultado de actualización: " + resultado);
+                
                 if (resultado) {
                     // Actualizar ejemplares disponibles del libro
                     Libro libro = libroDAO.buscarPorId(prestamo.getLibroId());
                     if (libro != null) {
                         libro.setEjemplaresDisponibles(libro.getEjemplaresDisponibles() + 1);
-                        libroDAO.actualizar(libro);
+                        boolean libroActualizado = libroDAO.actualizar(libro);
+                        System.out.println("Libro actualizado: " + libroActualizado);
                         
                         request.getSession().setAttribute("mensaje", "Devolución procesada correctamente");
                         request.getSession().setAttribute("tipo", "success");
                     } else {
+                        System.out.println("No se encontró el libro asociado");
                         request.getSession().setAttribute("mensaje", "Error: No se encontró el libro asociado");
                         request.getSession().setAttribute("tipo", "danger");
                     }
                 } else {
+                    System.out.println("Error al actualizar el préstamo");
                     request.getSession().setAttribute("mensaje", "Error al procesar la devolución");
                     request.getSession().setAttribute("tipo", "danger");
                 }
             } else {
+                System.out.println("Préstamo no encontrado o ya devuelto");
                 request.getSession().setAttribute("mensaje", "Préstamo no encontrado o ya devuelto");
                 request.getSession().setAttribute("tipo", "warning");
             }
             
             // Redirigir a la lista de préstamos
-            response.sendRedirect(request.getContextPath() + "/admin/prestamos/listar");
+            response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
             
         } catch (NumberFormatException e) {
+            System.err.println("Error en procesarDevolucion: " + e.getMessage());
             request.getSession().setAttribute("mensaje", "ID de préstamo inválido");
             request.getSession().setAttribute("tipo", "danger");
-            response.sendRedirect(request.getContextPath() + "/admin/prestamos/listar");
+            response.sendRedirect(request.getContextPath() + "/admin/prestamos?accion=listar");
         }
     }
     
     private void verHistorial(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
         Usuario usuario = (Usuario) request.getSession().getAttribute("usuario");
-        List<Prestamo> historial;
-        
-        if (esBibliotecario(request)) {
-            historial = prestamoDAO.listarHistorialCompleto();
-        } else {
-            historial = prestamoDAO.listarHistorialUsuario(usuario.getId());
-        }
-        
-        request.setAttribute("historial", historial);
-        String vista = esBibliotecario(request) ? 
-                      "/WEB-INF/admin/prestamos/historial.jsp" : 
-                      "/WEB-INF/lector/mi-historial.jsp";
-        request.getRequestDispatcher(vista).forward(request, response);
+        List<Prestamo> prestamos = prestamoDAO.listarPorUsuario(usuario.getId());
+        request.setAttribute("prestamos", prestamos);
+        request.setAttribute("now", new java.sql.Date(System.currentTimeMillis()));
+        request.getRequestDispatcher("/WEB-INF/lector/prestamos/historial.jsp").forward(request, response);
     }
     
     private boolean esBibliotecario(HttpServletRequest request) {
